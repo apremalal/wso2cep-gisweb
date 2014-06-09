@@ -1,0 +1,89 @@
+<%
+response.contentType = 'text/javascript';
+
+var verb = request.getMethod();
+var log = new Log();
+var action = request.getParameter('action');
+
+if(verb == "GET") {
+	if(action == "getAllActiveExecutionPlanConfigurations"){
+		var log = new Log();
+		var cepsocket = request.getParameter('cepsocket');
+		var cepusername = request.getParameter('cepusername');
+		var ceppassword = request.getParameter('ceppassword');
+		var ws = require('ws');
+
+		var version = new ws.WSRequest();
+		var options = new Array();
+		options.useSOAP = 1.2;
+		options.useWSA = 1.0;
+		options.action = "urn:getAllActiveExecutionPlanConfigurations";
+		var payload = "<adm:getAllActiveExecutionPlanConfigurations xmlns:adm=\"http://admin.processor.event.carbon.wso2.org\"></adm:getAllActiveExecutionPlanConfigurations>";
+		var result;
+
+		try {
+			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap11Endpoint/", false, cepusername, ceppassword);
+			version.send(payload);
+			result = version.responseE4X;
+		} catch (e) {
+			log.error(e.toString());
+		}
+		print(result);
+	}else if(action == "getActiveExecutionPlanConfigurationContent"){
+		var log = new Log();
+
+		var cepsocket = request.getParameter('cepsocket');
+		var cepusername = request.getParameter('cepusername');
+		var ceppassword = request.getParameter('ceppassword');
+		var exeplanName = request.getParameter('exeplanname');
+
+		var ws = require('ws');
+		var version = new ws.WSRequest();
+
+		var options = new Array();
+		options.useSOAP = 1.2;
+		options.useWSA = 1.0;
+		options.action = "urn:getActiveExecutionPlanConfigurationContent";
+		var payload = "<adm:getActiveExecutionPlanConfigurationContent xmlns:adm=\"http://admin.processor.event.carbon.wso2.org\"><adm:planName >"+exeplanName+"</adm:planName></adm:getActiveExecutionPlanConfigurationContent>" ;
+		var result;
+
+		try {
+			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap11Endpoint/", false, cepusername, ceppassword);
+			version.send(payload);
+			result = version.responseE4X;
+		} catch (e) {
+			log.error(e.toString());
+		}
+		print(result);
+	}else if(action == "editActiveExecutionPlanConfiguration"){
+		var log = new Log();
+
+		var cepsocket = request.getParameter('cepsocket');
+		var cepusername = request.getParameter('cepusername');
+		var ceppassword = request.getParameter('ceppassword');
+		var exeplanName = request.getParameter('exeplanname');
+		var configplancontent = request.getParameter('configplancontent');
+
+		var ws = require('ws');
+		var version = new ws.WSRequest();
+
+		var options = new Array();
+		options.useSOAP = 1.2;
+		options.useWSA = 1.0;
+		options.action = "urn:editActiveExecutionPlanConfiguration";
+		var payload = "<adm:editActiveExecutionPlanConfiguration xmlns:adm=\"http://admin.processor.event.carbon.wso2.org\"><adm:configuration><![CDATA["+configplancontent+"]]></adm:configuration><adm:name>"+exeplanName+"</adm:name></adm:editActiveExecutionPlanConfiguration>" ;
+		var result;
+
+		try {
+			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap11Endpoint/", false, cepusername, ceppassword);
+			version.send(payload);
+			result = version.responseE4X;
+		} catch (e) {
+			log.error(e.toString());
+		}
+		print(result);
+	}else{
+		print('hello');
+	}
+} 
+%>

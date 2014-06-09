@@ -1,0 +1,20 @@
+<%
+response.contentType = 'applicaiton/json';
+
+var verb = request.getMethod();
+var log = new Log();
+var data = request.getContent();
+if(verb == "POST") {
+	log.debug('Client Sent : '+ data.toString());
+	var ws = this;
+	var list = application.get('list');
+	var currentdate = new Date();
+	var dateStr = currentdate.toLocaleTimeString();
+	//broadcasting
+	for(var i = list.length - 1; i >= 0; i--) {		
+		list[i].send(data);
+	}
+}else{
+	print('bad request from CEP');
+}
+%>
