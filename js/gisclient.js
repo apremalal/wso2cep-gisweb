@@ -76,8 +76,10 @@ gisClient = new function() {
 				var cepExePlanName = $(this).find("name").text();
 				executionNameListHtml += '<li><a href="#" onClick="gisClient.showGisCongiguration(\''+cepExePlanName+'\');return false;">'+cepExePlanName +'</a></li>';
 				executionPlanList[cepExePlanName] = $(this).find("queryExpressions").text();
+				consoleText += ">> Fetched exeplan :"+cepExePlanName+"\n"
+				$("#console").text(consoleText);
 			  });
-			$("#executoinList").html(executionNameListHtml);
+			$("#executoinList").html(executionNameListHtml);			
 		});
 	}
 	
@@ -86,8 +88,7 @@ gisClient = new function() {
 		GISAppUtil.makeXMLRequest("GET","/wso2cep-gisweb/gis/", "action=getActiveExecutionPlanConfigurationContent&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&exeplanname="+cepExePlanName,function(xml) {
 			$(xml).find("return").each(function()
 			  {
-				activeExecutionPlanConfigurationContent = $(this).text();
-				$("#console").text(activeExecutionPlanConfigurationContent);
+				activeExecutionPlanConfigurationContent = $(this).text();				
 			  });
 		});
 	}
@@ -151,7 +152,7 @@ gisClient = new function() {
 	}
      
 	this.connectToWebsocket = function(){
-		var url = 'ws://localhost:9764/wso2cep-gisweb/gis/websocket';
+		var url = 'ws://10.100.5.106:9764/wso2cep-gisweb/gis/websocket';
 		ws = new WebSocket(url);
 		ws.onopen = function() {
 			$("#socketindicator").attr("src","assets/icons/green_indicator.png");
@@ -174,6 +175,7 @@ gisClient = new function() {
 	}
 	
 	this.clearConsole = function(){
-		$("#console").text('');
+		consoleText = '';
+		$("#console").val('');
 	}
 }
