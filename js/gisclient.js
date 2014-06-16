@@ -1,10 +1,10 @@
 var map, drawControls, polygonLayer, geojson;
     $(document).ready(function(){     
-	map = new OpenLayers.Map('map',{
+		map = new OpenLayers.Map('map',{
 				projection: new OpenLayers.Projection("EPSG:4326"),
 		   		displayProjection: new OpenLayers.Projection("EPSG:4326")			
 			});
-	   geojson = new OpenLayers.Format.GeoJSON({
+	    geojson = new OpenLayers.Format.GeoJSON({
 		  'internalProjection': new OpenLayers.Projection("EPSG:900913"),
 		  'externalProjection': new OpenLayers.Projection("EPSG:4326")
 		});
@@ -47,7 +47,53 @@ var map, drawControls, polygonLayer, geojson;
                ), 15
            	);  
         document.getElementById('noneToggle').checked = true;
-	
+
+        /* Changing dropdown connect on list item click */
+		$(".dropdown-menu").on('click', 'li a', function(){
+			var selText = $(this).text();
+	  		$(this).parents('.btn-group').find('.dropdown-toggle').html(selText+' <span class="caret"></span>');
+		});
+
+        $("#importStreamDiv").hide();
+        $("#exportStreamDiv").hide();
+
+        $("#addImportStream").click(function(){
+        	importStreamId = $("#importsreamlistbtn").text();
+        	importStreamName = $("#importStreamName").val();
+        	$("#importStreamDiv").show();
+        	gisClient.importStream(importStreamId,"in");
+        });
+
+        $("#addExportStream").click(function(){
+        	exportStreamId = $("#exportstreamlistbtn").text();
+        	exportStreamName = $("#exportStreamName").val();
+        	$("#exportStreamDiv").show();
+            gisClient.importStream(exportStreamId,"out");
+        });
+
+        $("#deleteImportStream").click(function(){
+        	importStreamId = "";
+        	importStreamName = "";
+        	$("#importStreamDiv").hide();
+        });
+
+        $("#deleteExportStream").click(function(){
+        	exportStreamId = "";
+        	exportStreamName = "";
+        	$("#exportStreamDiv").hide();
+        });
+
+        $("#addExecutionPlan").click(function(){
+        	gisClient.deployExecutoinPlan();
+        });
+
+        $("#connecttows").click(function(){
+        	gisClient.connectToWS();
+        });
+
+        $("#disconnectfromws").click(function(){
+        	gisClient.disconnectFromWS();
+        })
    });
 
 gisClient = new function() {
@@ -61,15 +107,108 @@ gisClient = new function() {
 	var cepusername;
 	var ceppassword;
 
+	/*Query builder params*/
+	var importStreamId = '';
+	var exportStreamId = '';
+	var importStreamName = '';
+	var exportStreamName = '';
+	var importStreamDefinitionAsString = '';
+	var exportStreamDefinitionAsString = '';
+
+	
 	this.updateCEPConfigurations = function(){
 		cepsocket = $("#cepsocket").val();
 		cepusername = $("#cepusername").val();
 		ceppassword =  $("#ceppassword").val();
+		if(!cepsocket || !cepusername || !ceppassword)
+			alert("Please enter cep configurations to perform the operation");
+	}
+
+	this.updateStreamId = function(streamId,inOrOut){
+		if(inOrOut == "import"){
+			importStreamId = streamId;			
+		}else if(inOrOut == "export"){
+			exportStreamId = streamId;
+		}			
+	}
+
+	this.importStream = function(streamId,inOrOut){
+		this.updateCEPConfigurations();
+		GISAppUtil.makeJSONRequest("GET","/wso2cep-gisweb/gis/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
+			if(inOrOut == "in"){
+				importStreamDefinitionAsString =  result.streamDefinition;	
+				importStreamName = $("#importStreamName").val();			
+				$("#importStreamAlert").text("define stream "+importStreamName+" ("+ importStreamDefinitionAsString + ")");
+			}else if(inOrOut == "out"){
+				exportStreamDefinitionAsString =  result.streamDefinition;	
+				exportStreamName = $("#exportStreamName").val();
+				$("#exportStreamAlert").text("define stream "+exportStreamName+" ("+ exportStreamDefinitionAsString + ")");
+			}			
+		});
+	}
+
+	this.launchQueryBuilder = function(){
+		this.updateCEPConfigurations();
+		if(polygon && polygon.features[0] && polygon.features[0].geometry){
+			GISAppUtil.makeJSONRequest("GET","/wso2cep-gisweb/gis/", "action=getAllEventStreamInfoDto&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword,function(response) {
+				var definitions = response.definitions;
+				var importStreamListHtml = ""; 
+				var exportStreamListHtml = "" ;
+				for(i in definitions){
+					var defObj = JSON.parse(definitions[i]);
+					var streamId = defObj.name+':'+defObj.version
+					importStreamListHtml += '<li><a href="#" onClick="gisClient.updateStreamId(\''+streamId+'\',\'import\');return false;">'+streamId+'</a></li>';
+					exportStreamListHtml += '<li><a href="#" onClick="gisClient.updateStreamId(\''+streamId+'\',\'export\');return false;">'+streamId+'</a></li>';
+				}
+				$("#importStreamList").html(importStreamListHtml);
+				$("#exportStreamList").html(exportStreamListHtml);
+				$("#processmodal").modal();
+			});
+        }else{
+        	alert("please draw a polygon to generate a GEO cep query");
+        }
+	}
+
+	this.getAllEventStreamInfoDto = function() {
+		this.updateCEPConfigurations();
+		
+	}
+
+	this.getStreamDefinitionAsString = function(streamId){
+		this.updateCEPConfigurations();
+		GISAppUtil.makeJSONRequest("GET","/wso2cep-gisweb/gis/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
+			return result.inputStreamDefinition;
+		});
+	}
+
+	this.deployExecutoinPlan = function() {
+		this.updateCEPConfigurations();
+		var name = $("#planname").val();
+		var queryExpressoin = $("#queryExpressoin").val();
+		GISAppUtil.makeJSONRequest("POST","/wso2cep-gisweb/gis/", "action=deployexecutionplan&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&importstreamname="+importStreamName+"&importstreamid="+importStreamId+"&exportstreamname="+exportStreamName+"&exportstreamid="+exportStreamId+"&queryexpression="+queryExpressoin+"&name="+name+"&distributesprocessing="+false+"&timeoutinterval="+0+"&staticsenabled="+false+"&tracingenabled="+false, function(result) {
+			alert(result);
+		});
+	}
+
+	this.validateQuery = function() {
+		this.updateCEPConfigurations();
+		var queryExpressoin = $("#queryExpressoin").val();
+		if(importStreamDefinitionAsString){
+			var inputStreamDefinition = "define stream "+importStreamName+" ("+ importStreamDefinitionAsString + ")";
+			GISAppUtil.makeJSONRequest("GET","/wso2cep-gisweb/gis/", "action=validatequery&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&queryexpression="+queryExpressoin+"&inputstreamdefinition="+inputStreamDefinition,function(result) {
+				if(result.status=="success"){
+					alert("Query is Valid");
+				}else{
+					alert("There is something wrong with the query");
+				}
+			});
+		}else
+			alert("insert an input stream");		
 	}
 
 	this.fetchAvailableExecutionList = function() {
 		this.updateCEPConfigurations();
-		GISAppUtil.makeXMLRequest("GET","/wso2cep-gisweb/gis/", "action=getAllActiveExecutionPlanConfigurations&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword ,function(xml) {
+		GISAppUtil.makeXMLRequest("GET","/wso2cep-gisweb/gis/", "action=getAllActiveExecutionPlanConfigurations&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword ,function(xml) {			
 			var executionNameListHtml='';
 			$(xml).find("return").each(function()
 			  {
@@ -79,7 +218,7 @@ gisClient = new function() {
 				consoleText += ">> Fetched exeplan :"+cepExePlanName+"\n"
 				$("#console").text(consoleText);
 			  });
-			$("#executoinList").html(executionNameListHtml);			
+			$("#executoinList").html(executionNameListHtml);				
 		});
 	}
 	
@@ -133,6 +272,14 @@ gisClient = new function() {
            }
      }
 
+    this.pastePolygon = function()
+    {
+    	var currentText = $("#queryExpressoin").val();
+    	var strPolygon = JSON.stringify(polygon.features[0].geometry);
+    	strPolygon = strPolygon.replace(/"/g, "'");
+    	$("#queryExpressoin").val(currentText + strPolygon);
+    }
+
 	this.updateExeAndConnectToCEP = function(){
 		this.serialize();
 		if(polygon && polygon.features[0] && polygon.features[0].geometry){
@@ -147,11 +294,11 @@ gisClient = new function() {
 		}
 	}
 
-	this.disconnectFromCEP = function(){
+	this.disconnectFromWS = function(){
 		ws.close();
 	}
      
-	this.connectToWebsocket = function(){
+	this.connectToWS = function(){
 		var url = 'ws://10.100.5.106:9764/wso2cep-gisweb/gis/websocket';
 		ws = new WebSocket(url);
 		ws.onopen = function() {

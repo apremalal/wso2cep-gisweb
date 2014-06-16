@@ -3,9 +3,9 @@ response.contentType = 'text/javascript';
 
 var verb = request.getMethod();
 var log = new Log();
-var action = request.getParameter('action');
 
 if(verb == "GET") {
+	var action = request.getParameter('action');
 	if(action == "getAllActiveExecutionPlanConfigurations"){
 		var log = new Log();
 		var cepsocket = request.getParameter('cepsocket');
@@ -82,8 +82,176 @@ if(verb == "GET") {
 			log.error(e.toString());
 		}
 		print(result);
+	}else if(action == "getAllEventStreamInfoDto"){
+		var log = new Log();
+
+		var cepsocket = request.getParameter('cepsocket');
+		var cepusername = request.getParameter('cepusername');
+		var ceppassword = request.getParameter('ceppassword');
+
+		var ws = require('ws');
+		var version = new ws.WSRequest();
+
+		var options = new Array();
+		options.useSOAP = 1.2;
+		options.useWSA = 1.0;
+		options.action = "urn:getAllEventStreamInfoDto";
+		var payload = "<int:getAllEventStreamInfoDto xmlns:int=\"http://internal.admin.manager.stream.event.carbon.wso2.org\"></int:getAllEventStreamInfoDto>" ;
+		var result;
+
+		try {
+			version.open(options, cepsocket+"/services/EventStreamAdminService.EventStreamAdminServiceHttpsSoap12Endpoint/", false, cepusername, ceppassword);
+			version.send(payload);
+			result = version.responseE4X;
+
+			var returnTemp = result.*::["return"];
+			var streamDefJson = {"definitions" : [] } ; 
+			for(i in returnTemp)
+			{
+				var streamDefTemp = returnTemp[i].*::["streamDefinition"];
+				streamDefJson.definitions.push(streamDefTemp.text());
+			}
+			print(streamDefJson);
+		} catch (e) {
+			log.error(e.toString());
+		}
+	}else if(action == "getStreamDefinitionAsString"){
+		var log = new Log();
+
+		var cepsocket = request.getParameter('cepsocket');
+		var cepusername = request.getParameter('cepusername');
+		var ceppassword = request.getParameter('ceppassword');
+		var streamid = request.getParameter('streamid');
+
+		var ws = require('ws');
+		var version = new ws.WSRequest();
+
+		var options = new Array();
+		options.useSOAP = 1.2;
+		options.useWSA = 1.0;
+		options.action = "urn:getStreamDefinitionAsString";
+		var payload = "<int:getStreamDefinitionAsString xmlns:int=\"http://internal.admin.manager.stream.event.carbon.wso2.org\"><int:streamId>"+streamid+"</int:streamId></int:getStreamDefinitionAsString> ";
+		var result;
+
+		try {
+			version.open(options, cepsocket+"/services/EventStreamAdminService.EventStreamAdminServiceHttpsSoap12Endpoint/", false, cepusername, ceppassword);
+			version.send(payload);
+			result = version.responseE4X;
+			var streamDef = result.*::["return"].text();
+			var responseJson = { "streamDefinition" : streamDef};	
+			print(responseJson);
+		} catch (e) {
+			log.error(e.toString());
+		}
+	}else if(action == "validatequery"){
+		var log = new Log();
+
+		var cepsocket = request.getParameter('cepsocket');
+		var cepusername = request.getParameter('cepusername');
+		var ceppassword = request.getParameter('ceppassword');
+		var queryexpression = request.getParameter('queryexpression');
+		var streamDefinition = request.getParameter('inputstreamdefinition')
+
+		var ws = require('ws');
+		var version = new ws.WSRequest();
+
+		var options = new Array();
+		options.useSOAP = 1.2;
+		options.useWSA = 1.0;
+		options.action = "urn:validateSiddhiQueries";
+		var payload = "<adm:validateSiddhiQueries xmlns:adm=\"http://admin.processor.event.carbon.wso2.org\"><adm:inputStreamDefiniitons>"+streamDefinition+"</adm:inputStreamDefiniitons><adm:queryExpressions>"+queryexpression+"</adm:queryExpressions></adm:validateSiddhiQueries>" ;
+		var result;
+		var responseJson = { "status" :"" , "message" : ""}
+		try {
+			
+			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap12Endpoint/", false, cepusername, ceppassword);			
+			version.send(payload);
+			result = version.responseE4X;
+			
+			var returnTemp = result.*::["return"];
+			
+			if(returnTemp){
+				if (returnTemp.text() == "true"){
+					responseJson.status = "success";
+					print(responseJson);
+				}
+			}else{
+				responseJson.status = "failed";
+				responseJson.message = "something went wrong";
+				print(responseJson);
+			}				
+
+		} catch (e) {
+			responseJson.status = "failed";
+			responseJson.message = "something went wrong";
+			print(responseJson);
+		}
 	}else{
 		print('hello');
 	}
-} 
+}else if(verb == "POST"){
+	var log = new Log();
+	var action = request.getParameter("action");
+
+	if(action == "deployexecutionplan"){		
+		
+		var cepsocket = request.getParameter('cepsocket');
+		var cepusername = request.getParameter('cepusername');
+		var ceppassword = request.getParameter('ceppassword');
+		var queryExpressoin = request.getParameter('queryexpression');
+		var importStreamName = request.getParameter('importstreamname');
+		var importStreamId = request.getParameter('importstreamid');
+		var exportStreamName = request.getParameter('exportstreamname');
+		var exportStreamId = request.getParameter('exportstreamid');
+		var name = request.getParameter('name');
+		var timeoutInterval = request.getParameter('timeoutinterval');
+		var statisticsEnabled = request.getParameter('staticsenabled');
+		var tracingEnabled = request.getParameter('tracingenabled');
+		var distributedProcessing = request.getParameter('distributedprocessing');
+		var ws = require('ws');
+		var version = new ws.WSRequest();
+
+		var options = new Array();
+		options.useSOAP = 1.2;
+		options.useWSA = 1.0;
+		options.action = "urn:deployExecutionPlanConfiguration";
+		var payload = "<adm:deployExecutionPlanConfiguration xmlns:adm=\"http://admin.processor.event.carbon.wso2.org\" xmlns:xsd=\"http://admin.processor.event.carbon.wso2.org/xsd\"><adm:configurationDto><xsd:description>?</xsd:description>"
+		+"<xsd:exportedStreams>"
+        +"      <xsd:siddhiStreamName>"+exportStreamName+"</xsd:siddhiStreamName>"
+        +"      <xsd:streamId>"+exportStreamId+"</xsd:streamId>"
+        +"   </xsd:exportedStreams>"
+        +"<xsd:importedStreams>"
+        +"      <xsd:siddhiStreamName>"+importStreamName+"</xsd:siddhiStreamName>"
+        +"       <xsd:streamId>"+importStreamId+"</xsd:streamId>"
+        +"    </xsd:importedStreams>"
+        +"<xsd:name>"+name+"</xsd:name>"
+        +"<xsd:queryExpressions>"+queryExpressoin+"</xsd:queryExpressions>"
+        +"<xsd:siddhiConfigurations>"
+        +"       <xsd:key>siddhi.enable.distributed.processing</xsd:key>"
+        +"       <xsd:value>"+distributedProcessing+"</xsd:value>"
+        +"    </xsd:siddhiConfigurations>"
+        +"<xsd:siddhiConfigurations>"
+        +"   <xsd:key>siddhi.persistence.snapshot.time.interval.minutes</xsd:key>"
+        +"   <xsd:value>"+timeoutInterval+"</xsd:value>"
+        +"</xsd:siddhiConfigurations>"
+        +"<xsd:statisticsEnabled>"+statisticsEnabled+"</xsd:statisticsEnabled>"
+        +"<xsd:tracingEnabled>"+tracingEnabled+"</xsd:tracingEnabled>"
+		+"</adm:configurationDto></adm:deployExecutionPlanConfiguration>";
+
+		var result;
+		var responseJson = { "status" :"" , "message" : ""}
+		try {
+			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap12Endpoint/", false, cepusername, ceppassword);
+			version.send(payload);
+			result = version.responseE4X;
+			responseJson.status = "success";
+			responseJson.message = "query deployed";
+		} catch (e) {
+			responseJson.status = "failed";
+			responseJson.message = "error occured while deploying the execution plan";
+			log.error(e.toString());
+		}
+		print(responseJson);
+	}
+}
 %>

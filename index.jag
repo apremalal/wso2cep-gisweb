@@ -204,43 +204,19 @@
                   <div class="panel-heading">
                     <h3 class="panel-title"><i class="fa fa-long-arrow-right"></i> Process</h3>
                   </div>
-                  <div class="panel-body">
-                    <form class="form-horizontal" role="form">
-                      <div class="form-group">
-                        <label for="inputEmail3" class="col-sm-3 control-label">Execution Plan</label>
-                        <div class="col-sm-9">
-                          <div class="btn-group">
-                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                              Execution plans
-                              <span class="caret"></span> 
-                              <span class="input-group-btn">
-                                <button class="btn btn-default" type="button" id="getexeplans" onClick="gisClient.fetchAvailableExecutionList();"><i class="fa fa-refresh"></i></button>
-                              </span>
-                            </button>
-                            <ul class="dropdown-menu" id="executoinList">
-                             
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="form-group">                        
-                        <div class="col-sm-12">
-                          <textarea class="form-control" rows="3" placeholder="select an execution plan" id="exeplantxtarea"></textarea>
-                        </div>
-                      </div>
+                  <div class="panel-body">                    
                       <label class="col-sm-3">Polygon</label>      
                       <div class="form-group">                                         
                         <div class="col-sm-12">
                           <textarea class="form-control" rows="3" placeholder="Darw a polygon on the map to generate the geojson" id="polygon"></textarea>
                         </div>
                       </div>
+                      <label class="col-sm-3" style="margin-top:10px;">GEO query</label>
                       <div class="form-group">
                         <div class="col-sm-9 col-md-offset-3">
-                          <p>
-                            <button type="button" class="btn btn-primary btn-xs" id="updatelisten" onClick="gisClient.updateExeAndConnectToCEP();">Update CEP and listen</button>
-                            <button type="button" class="btn btn-default btn-xs" id="disconnectcep" onClick="gisClient.disconnectFromCEP();">Disconnect from CEP</button>
-
-                          </p>
+                           <button type="button" class="btn btn-primary btn-xs" id="querybulder" onClick="gisClient.launchQueryBuilder();">Query Builder</button>
+                           <button type="button" class="btn btn-default btn-xs" id="connecttows" >Listen to CEP</button>
+                           <button type="button" class="btn btn-default btn-xs" id="disconnectfromws">Disconnect from CEP</button> 
                         </div>
                       </div>
                    </form>                    
@@ -252,7 +228,7 @@
                     <p>
                     <span class="avatar">
                       <button class="btn btn-default" type="button" onClick="gisClient.clearConsole();"><i class="fa fa-refresh"></i></button>
-                    </span>Console <label class="col-sm-5" style="float:right;">Websocket status :<span class="avatar"> <img id="socketindicator" src="assets/icons/red_indicator.png" style="width: 20px;float:right;"></span></label></p>                 
+                    </span>Console <label class="col-sm-5" style="float:right;">Websocket status :<span class="avatar"> <img id="socketindicator" src="assets/icons/red_indicator.png" style="width: 20px;float:right;"></span></label></p>               
                     <textarea class="form-control" rows="3" id="console" rows="5" cols="60"></textarea>  
                   </div>                      
               </div>
@@ -261,6 +237,113 @@
         </div><!-- /.row -->
 
       </div><!-- /#page-wrapper -->
+
+      <div class="modal fade" id="processmodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="myModalLabel">GEO Query Builder</h4>
+            </div>
+            <div class="modal-body">
+
+              <form class="form-horizontal" role="form">
+                <div class="form-group">
+                  <label for="planname" class="col-sm-3 control-label">Execution Plan Name</label>
+                  <div class="col-sm-7">
+                    <input type="email" class="form-control" id="planname" placeholder="Name">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="description" class="col-sm-3 control-label">Description</label>
+                  <div class="col-sm-7">
+                    <input type="text" class="form-control" id="description">
+                  </div>
+                </div>
+
+                 <div class="form-group">
+                  <label for="importstream" class="col-sm-3 control-label">Import Stream</label>
+                  <div class="col-sm-3">
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="importsreamlistbtn">
+                            Import Stream
+                        <span class="caret"></span> 
+                      </button>
+                      <ul class="dropdown-menu" id="importStreamList">
+                       
+                      </ul>
+                    </div>
+                  </div>
+                  <label class="col-sm-1 control-label">As</label>
+                  <div class="col-sm-3">
+                    <input type="text" class="form-control" id="importStreamName">                    
+                  </div>
+                  <div class="col-sm-1 btn-group">
+                      <button type="button" class="btn btn-default" id="addImportStream" ><i class="fa fa-plus"></i></button>
+                  </div>
+                 </div>
+
+                <div class="form-group">
+                  <label for="importstream" class="col-sm-3 control-label">Export Stream</label>
+                  <div class="col-sm-3">
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="exportstreamlistbtn">
+                            Export Stream
+                        <span class="caret"></span> 
+                      </button>
+                      <ul class="dropdown-menu" id="exportStreamList">
+                       
+                      </ul>
+                    </div>
+                  </div>
+                  <label class="col-sm-1 control-label">As</label>
+                  <div class="col-sm-3">
+                    <input type="text" class="form-control" id="exportStreamName">
+                  </div>
+                  <div class="col-sm-1 btn-group">
+                      <button type="button" class="btn btn-default" id="addExportStream"><i class="fa fa-plus"></i></button>
+                  </div>                 
+                </div> 
+
+                <div class="alert alert-success alert-dismissable col-sm-7 col-md-offset-3" id="importStreamDiv">
+                  <button type="button" class="close" id="deleteImportStream">&times;</button>
+                  <p>Import Stream</p>
+                  <p id="importStreamAlert"></p>
+                </div>
+
+                <div class="alert alert-info alert-dismissable col-sm-7 col-md-offset-3" id="exportStreamDiv">
+                  <button type="button" class="close" id="deleteExportStream">&times;</button>
+                  <p>Export Stream</p>
+                  <p id="exportStreamAlert"></p>
+                </div>
+
+                <div class="form-group"> 
+                  <label class="col-sm-3 control-label">Query Expressoin</label>                                            
+                  <div class="col-sm-7  ">
+                    <textarea class="form-control" rows="3" id="queryExpressoin"></textarea>
+                  </div>
+                  <div class="col-sm-1 btn-group">
+                      <button type="button" class="btn btn-default" id="pastepolygon" onClick="gisClient.pastePolygon();"><i class="fa fa-paste"></i></button>
+                  </div> 
+                </div> 
+                <div class="form-group">
+                  <div class="col-sm-9 col-md-offset-4">
+                    <p>
+                      <button type="button" class="btn btn-primary btn-xs" id="generateQuery" onClick="gisClient.updateExeAndConnectToCEP();">Generate Query</button>
+                      <button type="button" class="btn btn-default btn-xs" id="validateQuery" onClick="gisClient.validateQuery();">Validate Query</button>
+                    </p>
+                  </div>
+                </div>             
+              </form>
+
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="button" class="btn btn-primary" id="addExecutionPlan">Deploy Executoin Plan</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
     </div><!-- /#wrapper -->
 
