@@ -1,27 +1,14 @@
-GISAppUtil = new function() {
-    this.makeRequest = function(type, u, d, callback) {
-    	  $.ajax({
-            type: type,
-            url: u,
-            data: d,
-            dataType: "json",
-            success: callback
-        });
-        var requestOut = "Request URL: "+ window.location.host +""+ u+" \n"+"Request Method: "+type;
-        if(d !=null){
-        	requestOut += "\nRequest Data: "+d;        	
-        }
-        $("#request-textarea").val(requestOut);
-    };
-    
-
+GISAppUtil = new function() { 
     this.makeXMLRequest = function(type, u, d, callback) {
         $.ajax({
             type: type,
             url: u,
             data: d,
             dataType: "xml",
-            success: callback
+            success: callback,
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader ("Authorization",  "Basic " + btoa("admin" + ":" + "admin"));
+            }
         });
     };
 
@@ -31,7 +18,10 @@ GISAppUtil = new function() {
             url: u,
             data: d,
             dataType: "json",
-            success: callback
+            success: callback,
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader ("Authorization",  "Basic " + btoa("admin" + ":" + "admin"));
+            }
         });
     };
 }

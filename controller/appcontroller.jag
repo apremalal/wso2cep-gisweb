@@ -3,91 +3,15 @@ response.contentType = 'text/javascript';
 
 var verb = request.getMethod();
 var log = new Log();
+var cepsocket = '';
+var cepusername = '';
+var ceppassword = '';
 
-if(verb == "GET") {
+if(verb == "POST") {
 	var action = request.getParameter('action');
-	if(action == "getAllActiveExecutionPlanConfigurations"){
-		var log = new Log();
-		var cepsocket = request.getParameter('cepsocket');
-		var cepusername = request.getParameter('cepusername');
-		var ceppassword = request.getParameter('ceppassword');
-		var ws = require('ws');
 
-		var version = new ws.WSRequest();
-		var options = new Array();
-		options.useSOAP = 1.2;
-		options.useWSA = 1.0;
-		options.action = "urn:getAllActiveExecutionPlanConfigurations";
-		var payload = "<adm:getAllActiveExecutionPlanConfigurations xmlns:adm=\"http://admin.processor.event.carbon.wso2.org\"></adm:getAllActiveExecutionPlanConfigurations>";
-		var result;
-
-		try {
-			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap11Endpoint/", false, cepusername, ceppassword);
-			version.send(payload);
-			result = version.responseE4X;
-		} catch (e) {
-			log.error(e.toString());
-		}
-		print(result);
-	}else if(action == "getActiveExecutionPlanConfigurationContent"){
-		var log = new Log();
-
-		var cepsocket = request.getParameter('cepsocket');
-		var cepusername = request.getParameter('cepusername');
-		var ceppassword = request.getParameter('ceppassword');
-		var exeplanName = request.getParameter('exeplanname');
-
-		var ws = require('ws');
-		var version = new ws.WSRequest();
-
-		var options = new Array();
-		options.useSOAP = 1.2;
-		options.useWSA = 1.0;
-		options.action = "urn:getActiveExecutionPlanConfigurationContent";
-		var payload = "<adm:getActiveExecutionPlanConfigurationContent xmlns:adm=\"http://admin.processor.event.carbon.wso2.org\"><adm:planName >"+exeplanName+"</adm:planName></adm:getActiveExecutionPlanConfigurationContent>" ;
-		var result;
-
-		try {
-			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap11Endpoint/", false, cepusername, ceppassword);
-			version.send(payload);
-			result = version.responseE4X;
-		} catch (e) {
-			log.error(e.toString());
-		}
-		print(result);
-	}else if(action == "editActiveExecutionPlanConfiguration"){
-		var log = new Log();
-
-		var cepsocket = request.getParameter('cepsocket');
-		var cepusername = request.getParameter('cepusername');
-		var ceppassword = request.getParameter('ceppassword');
-		var exeplanName = request.getParameter('exeplanname');
-		var configplancontent = request.getParameter('configplancontent');
-
-		var ws = require('ws');
-		var version = new ws.WSRequest();
-
-		var options = new Array();
-		options.useSOAP = 1.2;
-		options.useWSA = 1.0;
-		options.action = "urn:editActiveExecutionPlanConfiguration";
-		var payload = "<adm:editActiveExecutionPlanConfiguration xmlns:adm=\"http://admin.processor.event.carbon.wso2.org\"><adm:configuration><![CDATA["+configplancontent+"]]></adm:configuration><adm:name>"+exeplanName+"</adm:name></adm:editActiveExecutionPlanConfiguration>" ;
-		var result;
-
-		try {
-			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap11Endpoint/", false, cepusername, ceppassword);
-			version.send(payload);
-			result = version.responseE4X;
-		} catch (e) {
-			log.error(e.toString());
-		}
-		print(result);
-	}else if(action == "getAllEventStreamInfoDto"){
-		var log = new Log();
-
-		var cepsocket = request.getParameter('cepsocket');
-		var cepusername = request.getParameter('cepusername');
-		var ceppassword = request.getParameter('ceppassword');
+	if(action == "getAllEventStreamInfoDto"){
+		extractCEPInfoFromRequest();
 
 		var ws = require('ws');
 		var version = new ws.WSRequest();
@@ -103,7 +27,7 @@ if(verb == "GET") {
 			version.open(options, cepsocket+"/services/EventStreamAdminService.EventStreamAdminServiceHttpsSoap12Endpoint/", false, cepusername, ceppassword);
 			version.send(payload);
 			result = version.responseE4X;
-
+			
 			var returnTemp = result.*::["return"];
 			var streamDefJson = {"definitions" : [] } ; 
 			for(i in returnTemp)
@@ -116,13 +40,9 @@ if(verb == "GET") {
 			log.error(e.toString());
 		}
 	}else if(action == "getStreamDefinitionAsString"){
-		var log = new Log();
-
-		var cepsocket = request.getParameter('cepsocket');
-		var cepusername = request.getParameter('cepusername');
-		var ceppassword = request.getParameter('ceppassword');
+		extractCEPInfoFromRequest();
 		var streamid = request.getParameter('streamid');
-
+		streamid = streamid.trim();
 		var ws = require('ws');
 		var version = new ws.WSRequest();
 
@@ -132,7 +52,6 @@ if(verb == "GET") {
 		options.action = "urn:getStreamDefinitionAsString";
 		var payload = "<int:getStreamDefinitionAsString xmlns:int=\"http://internal.admin.manager.stream.event.carbon.wso2.org\"><int:streamId>"+streamid+"</int:streamId></int:getStreamDefinitionAsString> ";
 		var result;
-
 		try {
 			version.open(options, cepsocket+"/services/EventStreamAdminService.EventStreamAdminServiceHttpsSoap12Endpoint/", false, cepusername, ceppassword);
 			version.send(payload);
@@ -144,11 +63,7 @@ if(verb == "GET") {
 			log.error(e.toString());
 		}
 	}else if(action == "validatequery"){
-		var log = new Log();
-
-		var cepsocket = request.getParameter('cepsocket');
-		var cepusername = request.getParameter('cepusername');
-		var ceppassword = request.getParameter('ceppassword');
+		extractCEPInfoFromRequest();
 		var queryexpression = request.getParameter('queryexpression');
 		var streamDefinition = request.getParameter('inputstreamdefinition')
 
@@ -177,27 +92,17 @@ if(verb == "GET") {
 				}
 			}else{
 				responseJson.status = "failed";
-				responseJson.message = "something went wrong";
+				responseJson.message = "something went wrong" + result;
 				print(responseJson);
 			}				
 
 		} catch (e) {
 			responseJson.status = "failed";
-			responseJson.message = "something went wrong";
+			responseJson.message = e.message;
 			print(responseJson);
 		}
-	}else{
-		print('hello');
-	}
-}else if(verb == "POST"){
-	var log = new Log();
-	var action = request.getParameter("action");
-
-	if(action == "deployexecutionplan"){		
-		
-		var cepsocket = request.getParameter('cepsocket');
-		var cepusername = request.getParameter('cepusername');
-		var ceppassword = request.getParameter('ceppassword');
+	}else if(action == "deployexecutionplan"){		
+		extractCEPInfoFromRequest();
 		var queryExpressoin = request.getParameter('queryexpression');
 		var importStreamName = request.getParameter('importstreamname');
 		var importStreamId = request.getParameter('importstreamid');
@@ -245,13 +150,20 @@ if(verb == "GET") {
 			version.send(payload);
 			result = version.responseE4X;
 			responseJson.status = "success";
-			responseJson.message = "query deployed";
+			responseJson.message = "Query deployed successfully";
 		} catch (e) {
 			responseJson.status = "failed";
-			responseJson.message = "error occured while deploying the execution plan";
+			responseJson.message = "Error occured while deploying the execution plan";
 			log.error(e.toString());
 		}
 		print(responseJson);
 	}
 }
+
+function extractCEPInfoFromRequest(){
+	cepsocket = request.getParameter('cepsocket');
+	cepusername = request.getParameter('cepusername');
+	ceppassword = request.getParameter('ceppassword');
+}
+
 %>

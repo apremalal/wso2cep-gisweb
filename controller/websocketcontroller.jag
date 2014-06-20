@@ -10,7 +10,6 @@ webSocket.onopen = function (outstre) {
 	log.debug(this.toString());
 	var streamList=[];
 	var list = application.get('list');
-	//var name = request.getParameter("user");
 	if(list ==null){
 		log.debug('adding list');
 		streamList.push(this);
@@ -39,7 +38,6 @@ webSocket.onclose = function (status) {
 	}
 
 	log.debug(list.length);
-	//log.debug(this.outbound.toString());
 };
 
 %>

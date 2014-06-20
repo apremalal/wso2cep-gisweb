@@ -1,30 +1,44 @@
-var map, drawControls, polygonLayer, geojson;
-    $(document).ready(function(){     
+var map, drawControls, polygonLayer, markerLayer, geojson;
+    $(document).ready(function(){  
+
 		map = new OpenLayers.Map('map',{
 				projection: new OpenLayers.Projection("EPSG:4326"),
 		   		displayProjection: new OpenLayers.Projection("EPSG:4326")			
 			});
+
 	    geojson = new OpenLayers.Format.GeoJSON({
 		  'internalProjection': new OpenLayers.Projection("EPSG:900913"),
 		  'externalProjection': new OpenLayers.Projection("EPSG:4326")
 		});
 
 		
-       var osmLayer = new OpenLayers.Layer.OSM("OpenCycleMap",
-	 ["http://a.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png",
-	  "http://b.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png",
-	  "http://c.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png"]);
+        var osmLayer = new OpenLayers.Layer.OSM("OpenCycleMap",
+		 ["http://a.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png",
+		  "http://b.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png",
+		  "http://c.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png"]);
         
-        polygonLayer = new OpenLayers.Layer.Vector("Polygon Layer");
-       
-        map.addLayers([osmLayer, polygonLayer]);
+        polygonLayer = new OpenLayers.Layer.Vector("Polygon Layer", {
+					    projection: "EPSG:4326"
+					   });
+
+        markerLayer = new OpenLayers.Layer.Vector("Overlay", {
+        										   projection: "EPSG:4326",
+					    						   styleMap: new OpenLayers.StyleMap({
+													            externalGraphic: 'assets/img/marker-icon.png',
+													            graphicWidth: 25, graphicHeight: 41, graphicYOffset: -24,
+													            title: '${tooltip}'
+													        })
+					   	});
+
+        
+        map.addLayers([osmLayer, markerLayer, polygonLayer]);
 	   
         map.addControl(new OpenLayers.Control.LayerSwitcher());
         map.addControl(new OpenLayers.Control.MousePosition());
-
-	   var options = {
+     
+        var options = {
                 hover: true,
-                onSelect: gisClient.serialize
+                onSelect: geoClient.serialize
             };
 
         drawControls = {
@@ -32,7 +46,7 @@ var map, drawControls, polygonLayer, geojson;
                 OpenLayers.Handler.Polygon)               
         };
 
-      var select = new OpenLayers.Control.SelectFeature(polygonLayer, options);
+       var select = new OpenLayers.Control.SelectFeature(polygonLayer, options);
        map.addControl(select);
        select.activate();
 
@@ -46,7 +60,8 @@ var map, drawControls, polygonLayer, geojson;
                    map.getProjectionObject()
                ), 15
            	);  
-        document.getElementById('noneToggle').checked = true;
+	  
+        $("#noneToggle").checked = true;
 
         /* Changing dropdown connect on list item click */
 		$(".dropdown-menu").on('click', 'li a', function(){
@@ -61,42 +76,44 @@ var map, drawControls, polygonLayer, geojson;
         	importStreamId = $("#importsreamlistbtn").text();
         	importStreamName = $("#importStreamName").val();
         	$("#importStreamDiv").show();
-        	gisClient.importStream(importStreamId,"in");
+        	geoClient.importStream(importStreamId,"in");
         });
 
         $("#addExportStream").click(function(){
         	exportStreamId = $("#exportstreamlistbtn").text();
         	exportStreamName = $("#exportStreamName").val();
         	$("#exportStreamDiv").show();
-            gisClient.importStream(exportStreamId,"out");
+            geoClient.importStream(exportStreamId,"out");
         });
 
         $("#deleteImportStream").click(function(){
         	importStreamId = "";
         	importStreamName = "";
+        	importStreamDefinitionAsString = "";
         	$("#importStreamDiv").hide();
         });
 
         $("#deleteExportStream").click(function(){
         	exportStreamId = "";
         	exportStreamName = "";
+        	exportStreamDefinitionAsString = "";
         	$("#exportStreamDiv").hide();
         });
 
         $("#addExecutionPlan").click(function(){
-        	gisClient.deployExecutoinPlan();
+        	geoClient.deployExecutoinPlan();
         });
 
         $("#connecttows").click(function(){
-        	gisClient.connectToWS();
+        	geoClient.connectToWS();
         });
 
         $("#disconnectfromws").click(function(){
-        	gisClient.disconnectFromWS();
+        	geoClient.disconnectFromWS();
         })
    });
 
-gisClient = new function() {
+geoClient = new function() {
 	var consoleText = '';
 	var ws;
 	var polygon;
@@ -121,7 +138,7 @@ gisClient = new function() {
 		cepusername = $("#cepusername").val();
 		ceppassword =  $("#ceppassword").val();
 		if(!cepsocket || !cepusername || !ceppassword)
-			alert("Please enter cep configurations to perform the operation");
+			this.alert("Please enter cep configurations to perform the operation");
 	}
 
 	this.updateStreamId = function(streamId,inOrOut){
@@ -134,7 +151,9 @@ gisClient = new function() {
 
 	this.importStream = function(streamId,inOrOut){
 		this.updateCEPConfigurations();
-		GISAppUtil.makeJSONRequest("GET","/wso2cep-gisweb/gis/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
+		streamId = streamId.trim();
+		if(streamId!="Import Stream" && streamId!="Export Stream"){
+			GISAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
 			if(inOrOut == "in"){
 				importStreamDefinitionAsString =  result.streamDefinition;	
 				importStreamName = $("#importStreamName").val();			
@@ -144,39 +163,39 @@ gisClient = new function() {
 				exportStreamName = $("#exportStreamName").val();
 				$("#exportStreamAlert").text("define stream "+exportStreamName+" ("+ exportStreamDefinitionAsString + ")");
 			}			
-		});
+			});
+		}else{
+			alert("please select a stream to import");
+		}
+		
 	}
 
 	this.launchQueryBuilder = function(){
 		this.updateCEPConfigurations();
+		this.serialize();
 		if(polygon && polygon.features[0] && polygon.features[0].geometry){
-			GISAppUtil.makeJSONRequest("GET","/wso2cep-gisweb/gis/", "action=getAllEventStreamInfoDto&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword,function(response) {
+			GISAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getAllEventStreamInfoDto&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword,function(response) {
 				var definitions = response.definitions;
 				var importStreamListHtml = ""; 
 				var exportStreamListHtml = "" ;
 				for(i in definitions){
 					var defObj = JSON.parse(definitions[i]);
 					var streamId = defObj.name+':'+defObj.version
-					importStreamListHtml += '<li><a href="#" onClick="gisClient.updateStreamId(\''+streamId+'\',\'import\');return false;">'+streamId+'</a></li>';
-					exportStreamListHtml += '<li><a href="#" onClick="gisClient.updateStreamId(\''+streamId+'\',\'export\');return false;">'+streamId+'</a></li>';
+					importStreamListHtml += '<li><a href="#" onClick="geoClient.updateStreamId(\''+streamId+'\',\'import\');return false;">'+streamId+'</a></li>';
+					exportStreamListHtml += '<li><a href="#" onClick="geoClient.updateStreamId(\''+streamId+'\',\'export\');return false;">'+streamId+'</a></li>';
 				}
 				$("#importStreamList").html(importStreamListHtml);
 				$("#exportStreamList").html(exportStreamListHtml);
 				$("#processmodal").modal();
 			});
         }else{
-        	alert("please draw a polygon to generate a GEO cep query");
+        	this.alert("please draw a polygon before creating GEO cep query");
         }
-	}
-
-	this.getAllEventStreamInfoDto = function() {
-		this.updateCEPConfigurations();
-		
 	}
 
 	this.getStreamDefinitionAsString = function(streamId){
 		this.updateCEPConfigurations();
-		GISAppUtil.makeJSONRequest("GET","/wso2cep-gisweb/gis/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
+		GISAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
 			return result.inputStreamDefinition;
 		});
 	}
@@ -185,17 +204,20 @@ gisClient = new function() {
 		this.updateCEPConfigurations();
 		var name = $("#planname").val();
 		var queryExpressoin = $("#queryExpressoin").val();
-		GISAppUtil.makeJSONRequest("POST","/wso2cep-gisweb/gis/", "action=deployexecutionplan&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&importstreamname="+importStreamName+"&importstreamid="+importStreamId+"&exportstreamname="+exportStreamName+"&exportstreamid="+exportStreamId+"&queryexpression="+queryExpressoin+"&name="+name+"&distributesprocessing="+false+"&timeoutinterval="+0+"&staticsenabled="+false+"&tracingenabled="+false, function(result) {
-			alert(result);
+		GISAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=deployexecutionplan&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&importstreamname="+importStreamName+"&importstreamid="+importStreamId+"&exportstreamname="+exportStreamName+"&exportstreamid="+exportStreamId+"&queryexpression="+queryExpressoin+"&name="+name+"&distributesprocessing="+false+"&timeoutinterval="+0+"&staticsenabled="+false+"&tracingenabled="+false, function(result) {
+			$("#processmodal").modal('hide');
+			$("#alertText").text(result.message);
+			$("#alertTitle").text(result.status);
+			$("#alertmodal").modal();
 		});
 	}
 
 	this.validateQuery = function() {
 		this.updateCEPConfigurations();
 		var queryExpressoin = $("#queryExpressoin").val();
-		if(importStreamDefinitionAsString){
+		if(importStreamDefinitionAsString!=""){
 			var inputStreamDefinition = "define stream "+importStreamName+" ("+ importStreamDefinitionAsString + ")";
-			GISAppUtil.makeJSONRequest("GET","/wso2cep-gisweb/gis/", "action=validatequery&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&queryexpression="+queryExpressoin+"&inputstreamdefinition="+inputStreamDefinition,function(result) {
+			GISAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=validatequery&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&queryexpression="+queryExpressoin+"&inputstreamdefinition="+inputStreamDefinition,function(result) {
 				if(result.status=="success"){
 					alert("Query is Valid");
 				}else{
@@ -203,17 +225,17 @@ gisClient = new function() {
 				}
 			});
 		}else
-			alert("insert an input stream");		
+			this.alert("Please add an input stream");		
 	}
 
 	this.fetchAvailableExecutionList = function() {
 		this.updateCEPConfigurations();
-		GISAppUtil.makeXMLRequest("GET","/wso2cep-gisweb/gis/", "action=getAllActiveExecutionPlanConfigurations&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword ,function(xml) {			
+		GISAppUtil.makeXMLRequest("POST","/geo-portal/geo/", "action=getAllActiveExecutionPlanConfigurations&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword ,function(xml) {			
 			var executionNameListHtml='';
 			$(xml).find("return").each(function()
 			  {
 				var cepExePlanName = $(this).find("name").text();
-				executionNameListHtml += '<li><a href="#" onClick="gisClient.showGisCongiguration(\''+cepExePlanName+'\');return false;">'+cepExePlanName +'</a></li>';
+				executionNameListHtml += '<li><a href="#" onClick="geoClient.showGisCongiguration(\''+cepExePlanName+'\');return false;">'+cepExePlanName +'</a></li>';
 				executionPlanList[cepExePlanName] = $(this).find("queryExpressions").text();
 				consoleText += ">> Fetched exeplan :"+cepExePlanName+"\n"
 				$("#console").text(consoleText);
@@ -224,28 +246,13 @@ gisClient = new function() {
 	
 	this.getActiveExecutionPlanConfigurationContent = function(cepExePlanName) {
 		this.updateCEPConfigurations();
-		GISAppUtil.makeXMLRequest("GET","/wso2cep-gisweb/gis/", "action=getActiveExecutionPlanConfigurationContent&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&exeplanname="+cepExePlanName,function(xml) {
+		GISAppUtil.makeXMLRequest("POST","/geo-portal/geo/", "action=getActiveExecutionPlanConfigurationContent&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&exeplanname="+cepExePlanName,function(xml) {
 			$(xml).find("return").each(function()
 			  {
 				activeExecutionPlanConfigurationContent = $(this).text();				
 			  });
 		});
 	}
-	
-	this.editActiveExecutionPlanConfiguration = function(configuration) {
-		this.updateCEPConfigurations();
-		GISAppUtil.makeXMLRequest("GET","/wso2cep-gisweb/gis/", "action=editActiveExecutionPlanConfiguration&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&configplancontent="+activeExecutionPlanConfigurationContent+"&exeplanname="+activeExecutionPlanName,function(xml) {
-			
-		});
-	}
-
-	this.showGisCongiguration = function(cepExePlanName)
-	{
-		activeExecutionPlanName = cepExePlanName;
-		$("#exeplantxtarea").text(executionPlanList[cepExePlanName]);			
-		this.getActiveExecutionPlanConfigurationContent(activeExecutionPlanName);
-	}
-
 
 	this.toggleControl = function(element) {
 		 for(key in drawControls) {
@@ -272,6 +279,12 @@ gisClient = new function() {
            }
      }
 
+     this.pasteTemplate = function()
+    {
+    	var template = "from <inputstream>[geo:iswithin(<long>,<lat>,<polygon>)] select <params> insert into <outputstream>";
+    	$("#queryExpressoin").val(template);
+    }
+
     this.pastePolygon = function()
     {
     	var currentText = $("#queryExpressoin").val();
@@ -280,26 +293,12 @@ gisClient = new function() {
     	$("#queryExpressoin").val(currentText + strPolygon);
     }
 
-	this.updateExeAndConnectToCEP = function(){
-		this.serialize();
-		if(polygon && polygon.features[0] && polygon.features[0].geometry){
-			temp1 = activeExecutionPlanConfigurationContent.match(new RegExp("(gis:iswithin\\()(\\w*),(\".*\")"));
-			editedPlan = temp1[0].replace(/(\".*\")/,"\""+JSON.stringify(polygon.features[0].geometry).replace(new RegExp("\"", 'g'),"'")+"\"");
-			activeExecutionPlanConfigurationContent = activeExecutionPlanConfigurationContent.replace(new RegExp("(gis:iswithin\\()(\\w*),(\".*\")"),editedPlan);
-			activeExecutionPlanConfigurationContent = activeExecutionPlanConfigurationContent.replace("<![CDATA[", "").replace("]]>", "");
-			this.editActiveExecutionPlanConfiguration();
-			this.connectToWebsocket();
-		}else{
-			alert("draw a apolygon before anlyzing");
-		}
-	}
-
 	this.disconnectFromWS = function(){
 		ws.close();
 	}
      
 	this.connectToWS = function(){
-		var url = 'ws://10.100.5.106:9764/wso2cep-gisweb/gis/websocket';
+		var url = 'ws://localhost:9764/geo-portal/geo/websocket';
 		ws = new WebSocket(url);
 		ws.onopen = function() {
 			$("#socketindicator").attr("src","assets/icons/green_indicator.png");
@@ -307,10 +306,28 @@ gisClient = new function() {
 			$("#console").val(consoleText);
 		};
 
-		//event handler for the message event in the case of text frames
 		ws.onmessage = function(event) {
 			consoleText += ">> " + event.data + "\n"
 			$("#console").val(consoleText);
+			if(event.data){
+				var geoPoint = JSON.parse(event.data);
+				longitude = geoPoint.geometry.coordinates[0];
+				lattitude = geoPoint.geometry.coordinates[1];
+				var withinLocation = new OpenLayers.Geometry.Point(longitude, lattitude).transform('EPSG:4326', 'EPSG:900913');
+
+			    markerLayer.addFeatures([
+			        new OpenLayers.Feature.Vector(withinLocation, {tooltip: 'OpenLayers'})
+			    ]); 
+
+			    var popupLable = "lon :"+ longitude +"<br>lat :" + lattitude + "<br> iswithin : "+ geoPoint.properties.iswithin;
+		        var popup = new OpenLayers.Popup.FramedCloud("Popup", withinLocation.getBounds().getCenterLonLat(), null,popupLable ,null,true);
+
+		        /*removing the exisiting popups*/
+		        while( map.popups.length ) {
+			         map.removePopup(map.popups[0]);
+			    }
+	   			map.addPopup(popup);
+			}
 		};
 
 		ws.onclose = function() {
@@ -324,5 +341,10 @@ gisClient = new function() {
 	this.clearConsole = function(){
 		consoleText = '';
 		$("#console").val('');
+	}
+
+	this.alert = function(message){
+		$("#alertText").text(message);
+		$("#alertmodal").modal();
 	}
 }
