@@ -47,7 +47,7 @@
                       <a tabindex="-1"><span class="mm-text">Overlay</span></a>
                     </li>
                   </ul>
-                </li>
+              </li>
 
 
             <li class="dropdown">
@@ -68,6 +68,10 @@
                 </li> 
               </ul>
             </li>
+
+            <li>
+              <button type="button" class="btn btn-info" style="margin-left:20px;margin-top:20px;" data-toggle="modal" data-target="#userguide">User Guide</button>
+            <li>
           </ul>
           </div>
           <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
@@ -81,7 +85,8 @@
       		   <div class="col-lg-8" style="padding-right:40px;">
               <div class="row panel panel-info">
                 <div class="panel-heading">
-                  <h3 class="panel-title"><i class="fa fa-long-arrow-right"></i>Geo fencing map</h3>
+                  <h3 class="panel-title"><button class="btn btn-default" type="button" onclick="geoClient.refreshPolygonLayer();"><i class="fa fa-refresh"></i></button> Geo fencing map 
+                  </h3>
                 </div>
                 <div id="map" class="pannel-body" style="height:800px;">
                 </div>
@@ -278,6 +283,24 @@
             </div>
             <div class="modal-body">
               <p id="alertText"> <p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="userguide" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title" id="alertTitle">User Guide</h4>
+            </div>
+            <div class="modal-body">
+              <p>1. Enter the configuretions of the CEP which the execution plan needs to be deployed.<p>
+              <p>2. Draw a polygon using "Draw polygon" tool covering the area which you need to test "witihin" functionality.<p>
+                Note: you can see the generated geojson of the polygon by hovering the mouse to the drawn polygon
+              <p>3. Create a CEP query using the given template in the query builder or use your own.<p>
+              <p>4. Deploy the execution plan and listen to the CEP.<p>
             </div>
           </div>
         </div>

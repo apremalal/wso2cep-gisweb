@@ -1,67 +1,8 @@
-var map, drawControls, polygonLayer, markerLayer, geojson;
+var map, drawControls, select, polygonLayer, markerLayer, geojson;
+
     $(document).ready(function(){  
 
-		map = new OpenLayers.Map('map',{
-				projection: new OpenLayers.Projection("EPSG:4326"),
-		   		displayProjection: new OpenLayers.Projection("EPSG:4326")			
-			});
-
-	    geojson = new OpenLayers.Format.GeoJSON({
-		  'internalProjection': new OpenLayers.Projection("EPSG:900913"),
-		  'externalProjection': new OpenLayers.Projection("EPSG:4326")
-		});
-
-		
-        var osmLayer = new OpenLayers.Layer.OSM("OpenCycleMap",
-		 ["http://a.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png",
-		  "http://b.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png",
-		  "http://c.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png"]);
-        
-        polygonLayer = new OpenLayers.Layer.Vector("Polygon Layer", {
-					    projection: "EPSG:4326"
-					   });
-
-        markerLayer = new OpenLayers.Layer.Vector("Overlay", {
-        										   projection: "EPSG:4326",
-					    						   styleMap: new OpenLayers.StyleMap({
-													            externalGraphic: 'assets/img/marker-icon.png',
-													            graphicWidth: 25, graphicHeight: 41, graphicYOffset: -24,
-													            title: '${tooltip}'
-													        })
-					   	});
-
-        
-        map.addLayers([osmLayer, markerLayer, polygonLayer]);
-	   
-        map.addControl(new OpenLayers.Control.LayerSwitcher());
-        map.addControl(new OpenLayers.Control.MousePosition());
-     
-        var options = {
-                hover: true,
-                onSelect: geoClient.serialize
-            };
-
-        drawControls = {
-    	    polygon: new OpenLayers.Control.DrawFeature(polygonLayer,
-                OpenLayers.Handler.Polygon)               
-        };
-
-       var select = new OpenLayers.Control.SelectFeature(polygonLayer, options);
-       map.addControl(select);
-       select.activate();
-
-        for(var key in drawControls) {
-            map.addControl(drawControls[key]);
-        }
-		
-	   map.setCenter(
-               new OpenLayers.LonLat(79.86, 6.915).transform(
-                   new OpenLayers.Projection("EPSG:4326"),
-                   map.getProjectionObject()
-               ), 15
-           	);  
-	  
-        $("#noneToggle").checked = true;
+	  	geoClient.initMap();       
 
         /* Changing dropdown connect on list item click */
 		$(".dropdown-menu").on('click', 'li a', function(){
@@ -132,7 +73,114 @@ geoClient = new function() {
 	var importStreamDefinitionAsString = '';
 	var exportStreamDefinitionAsString = '';
 
-	
+	this.initMap = function(){
+
+		$("#map").html('');
+		$("#noneToggle").prop('checked', true);;
+		$("#polygonToggle").prop('checked', false);
+		
+		map = new OpenLayers.Map('map',{
+				projection: new OpenLayers.Projection("EPSG:4326"),
+		   		displayProjection: new OpenLayers.Projection("EPSG:4326")			
+			});
+
+	    geojson = new OpenLayers.Format.GeoJSON({
+		  'internalProjection': new OpenLayers.Projection("EPSG:900913"),
+		  'externalProjection': new OpenLayers.Projection("EPSG:4326")
+		});
+
+		
+        var osmLayer = new OpenLayers.Layer.OSM("OpenCycleMap",
+		 ["http://a.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png",
+		  "http://b.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png",
+		  "http://c.tile.opencyclemap.org/cycle/${z}/${x}/${y}.png"]);
+        
+        polygonLayer = new OpenLayers.Layer.Vector("Polygon Layer", {
+					    projection: "EPSG:4326"
+					   });
+
+        markerLayer = new OpenLayers.Layer.Vector("Overlay", {
+        										   projection: "EPSG:4326",
+					    						   styleMap: new OpenLayers.StyleMap({
+													            externalGraphic: 'assets/img/marker-icon.png',
+													            graphicWidth: 25, graphicHeight: 41, graphicYOffset: -24,
+													            title: '${tooltip}'
+													        })
+					   	});
+
+        
+        map.addLayers([osmLayer, markerLayer, polygonLayer]);
+	   
+        map.addControl(new OpenLayers.Control.LayerSwitcher());
+        map.addControl(new OpenLayers.Control.MousePosition());
+     
+        var options = {
+                hover: true,
+                onSelect: geoClient.serialize
+            };
+
+        drawControls = {
+    	    polygon: new OpenLayers.Control.DrawFeature(polygonLayer,
+                OpenLayers.Handler.Polygon)               
+        };
+
+        select = new OpenLayers.Control.SelectFeature(polygonLayer, options);
+        map.addControl(select);
+        select.activate();
+
+        for(var key in drawControls) {
+            map.addControl(drawControls[key]);
+        }
+		
+	    map.setCenter(
+               new OpenLayers.LonLat(79.86, 6.915).transform(
+                   new OpenLayers.Projection("EPSG:4326"),
+                   map.getProjectionObject()
+               ), 15
+           	); 
+	}
+
+	this.refreshPolygonLayer = function(){
+
+		$("#noneToggle").prop('checked', true);;
+		$("#polygonToggle").prop('checked', false);
+
+		map.removeLayer(polygonLayer);
+		select.deactivate();
+		map.removeControl(select);		
+
+		for(var key in drawControls) {
+            map.removeControl(drawControls[key]);
+            (drawControls[key]).deactivate();
+        }        
+        drawControls = {};
+        
+		polygonLayer = new OpenLayers.Layer.Vector("Polygon Layer", {
+					    projection: "EPSG:4326"
+					   });
+
+		map.addLayer(polygonLayer);
+
+		var options = {
+                hover: true,
+                onSelect: geoClient.serialize
+            };
+
+        drawControls = {
+    	    polygon: new OpenLayers.Control.DrawFeature(polygonLayer,
+                OpenLayers.Handler.Polygon)               
+        };
+
+       select = new OpenLayers.Control.SelectFeature(polygonLayer, options);
+       map.addControl(select);
+
+       select.activate();
+
+        for(var key in drawControls) {
+            map.addControl(drawControls[key]);
+        }
+	}
+
 	this.updateCEPConfigurations = function(){
 		cepsocket = $("#cepsocket").val();
 		cepusername = $("#cepusername").val();
@@ -279,14 +327,12 @@ geoClient = new function() {
            }
      }
 
-     this.pasteTemplate = function()
-    {
+     this.pasteTemplate = function(){
     	var template = "from <inputstream>[geo:iswithin(<long>,<lat>,<polygon>)] select <params> insert into <outputstream>";
     	$("#queryExpressoin").val(template);
     }
 
-    this.pastePolygon = function()
-    {
+    this.pastePolygon = function(){
     	var currentText = $("#queryExpressoin").val();
     	var strPolygon = JSON.stringify(polygon.features[0].geometry);
     	strPolygon = strPolygon.replace(/"/g, "'");
@@ -306,7 +352,7 @@ geoClient = new function() {
 			$("#console").val(consoleText);
 		};
 
-		ws.onmessage = function(event) {
+		ws.onmessage = function(event){
 			consoleText += ">> " + event.data + "\n"
 			$("#console").val(consoleText);
 			if(event.data){
@@ -330,7 +376,7 @@ geoClient = new function() {
 			}
 		};
 
-		ws.onclose = function() {
+		ws.onclose = function(){
 			$("#socketindicator").attr("src","assets/icons/red_indicator.png");
 			consoleText += ">> Websocket closed.\n"
 			$("#console").val(consoleText);
