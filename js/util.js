@@ -1,4 +1,4 @@
-GISAppUtil = new function() { 
+GeoAppUtil = new function() { 
     this.makeXMLRequest = function(type, u, d, callback) {
         $.ajax({
             type: type,

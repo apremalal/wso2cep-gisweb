@@ -10,7 +10,7 @@ var ceppassword = '';
 if(verb == "POST") {
 	var action = request.getParameter('action');
 
-	if(action == "getAllEventStreamInfoDto"){
+	if(action == "getAllEventStreamInfoDto") {
 		extractCEPInfoFromRequest();
 
 		var ws = require('ws');
@@ -30,16 +30,16 @@ if(verb == "POST") {
 			
 			var returnTemp = result.*::["return"];
 			var streamDefJson = {"definitions" : [] } ; 
-			for(i in returnTemp)
+			for each(var x in returnTemp)
 			{
-				var streamDefTemp = returnTemp[i].*::["streamDefinition"];
+				var streamDefTemp = x..*::streamDefinition;
 				streamDefJson.definitions.push(streamDefTemp.text());
 			}
 			print(streamDefJson);
 		} catch (e) {
 			log.error(e.toString());
 		}
-	}else if(action == "getStreamDefinitionAsString"){
+	}else if(action == "getStreamDefinitionAsString") {
 		extractCEPInfoFromRequest();
 		var streamid = request.getParameter('streamid');
 		streamid = streamid.trim();
@@ -62,7 +62,7 @@ if(verb == "POST") {
 		} catch (e) {
 			log.error(e.toString());
 		}
-	}else if(action == "validatequery"){
+	}else if(action == "validatequery") {
 		extractCEPInfoFromRequest();
 		var queryexpression = request.getParameter('queryexpression');
 		var streamDefinition = request.getParameter('inputstreamdefinition')
@@ -101,7 +101,7 @@ if(verb == "POST") {
 			responseJson.message = e.message;
 			print(responseJson);
 		}
-	}else if(action == "deployexecutionplan"){		
+	}else if(action == "deployexecutionplan") {		
 		extractCEPInfoFromRequest();
 		var queryExpressoin = request.getParameter('queryexpression');
 		var importStreamName = request.getParameter('importstreamname');
@@ -160,7 +160,7 @@ if(verb == "POST") {
 	}
 }
 
-function extractCEPInfoFromRequest(){
+function extractCEPInfoFromRequest() {
 	cepsocket = request.getParameter('cepsocket');
 	cepusername = request.getParameter('cepusername');
 	ceppassword = request.getParameter('ceppassword');

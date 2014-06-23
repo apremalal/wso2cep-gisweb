@@ -26,7 +26,7 @@
                   <img src="assets/img/wso2-logo.png" width="200" height="100">
                 </div>
               </li>
-              <li class="active"><a href="/wso2cep-gisweb"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+              <li class="active"><a href="/geo-portal"><i class="fa fa-dashboard"></i> Home</a></li>
             
               <li class="dropdown">
                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-pencil"></i> Function <b class="caret"></b></a>
@@ -54,14 +54,13 @@
               <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-caret-square-o-down"></i> Tools <b class="caret"></b></a>
               <ul class="dropdown-menu" style="margin-left:15px;padding: 10px;">
                 <li>
-                  <input type="radio" name="type" value="none" id="noneToggle" checked="unchecked" onclick="geoClient.toggleControl(this);"/>
-                  <label for="noneToggle">Navigate</label>
-                </li>
-                <li>
                   <input type="radio" name="type" value="polygon" id="polygonToggle" onclick="geoClient.toggleControl(this);"/>
                   <label for="polygonToggle">Draw Polygon</label>
                 </li>
-
+                <li>
+                  <input type="radio" name="type" value="none" id="noneToggle" checked="unchecked" onclick="geoClient.toggleControl(this);"/>
+                  <label for="noneToggle">Navigate</label>
+                </li>      
                 <li>
                   <input type="radio" name="allow-pan" value="allow-pan" id="allowPanCheckbox" checked=true onclick="allowPan(this);" />
                   <label for="allowPanCheckbox">Allow Pan While Drawing</label>
@@ -136,8 +135,8 @@
                       <div class="form-group">
                         <div class="col-sm-9 col-md-offset-3">
                            <button type="button" class="btn btn-primary btn-xs" id="querybulder" onClick="geoClient.launchQueryBuilder();">Query Builder</button>
-                           <button type="button" class="btn btn-default btn-xs" id="connecttows" >Listen to CEP</button>
-                           <button type="button" class="btn btn-default btn-xs" id="disconnectfromws">Disconnect from CEP</button> 
+                           <button type="button" class="btn btn-default btn-xs" id="connecttows" onClick="geoClient.connectToWS();" >Listen to CEP</button>
+                           <button type="button" class="btn btn-default btn-xs" id="disconnectfromws" onClick="geoClient.disconnectFromWS();">Disconnect from CEP</button> 
                         </div>
                       </div>
                    </form>                    
@@ -268,7 +267,7 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary" id="addExecutionPlan">Deploy Executoin Plan</button>
+              <button type="button" class="btn btn-primary" id="addExecutionPlan" onClick="geoClient.deployExecutoinPlan();">Deploy Executoin Plan</button>
             </div>
           </div>
         </div>

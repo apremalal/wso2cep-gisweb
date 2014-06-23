@@ -40,18 +40,6 @@ var map, drawControls, select, polygonLayer, markerLayer, geojson;
         	exportStreamDefinitionAsString = "";
         	$("#exportStreamDiv").hide();
         });
-
-        $("#addExecutionPlan").click(function(){
-        	geoClient.deployExecutoinPlan();
-        });
-
-        $("#connecttows").click(function(){
-        	geoClient.connectToWS();
-        });
-
-        $("#disconnectfromws").click(function(){
-        	geoClient.disconnectFromWS();
-        })
    });
 
 geoClient = new function() {
@@ -154,7 +142,7 @@ geoClient = new function() {
             (drawControls[key]).deactivate();
         }        
         drawControls = {};
-        
+
 		polygonLayer = new OpenLayers.Layer.Vector("Polygon Layer", {
 					    projection: "EPSG:4326"
 					   });
@@ -179,6 +167,24 @@ geoClient = new function() {
         for(var key in drawControls) {
             map.addControl(drawControls[key]);
         }
+
+		/*removing the exisiting popups*/
+        while( map.popups.length ) {
+	         map.removePopup(map.popups[0]);
+	    }
+
+	    /*removing the marker layer*/
+	    map.removeLayer(markerLayer);
+
+	    markerLayer = new OpenLayers.Layer.Vector("Overlay", {
+        										   projection: "EPSG:4326",
+					    						   styleMap: new OpenLayers.StyleMap({
+													            externalGraphic: 'assets/img/marker-icon.png',
+													            graphicWidth: 25, graphicHeight: 41, graphicYOffset: -24,
+													            title: '${tooltip}'
+													        })
+					   	});
+	    map.addLayer(markerLayer);
 	}
 
 	this.updateCEPConfigurations = function(){
@@ -201,7 +207,7 @@ geoClient = new function() {
 		this.updateCEPConfigurations();
 		streamId = streamId.trim();
 		if(streamId!="Import Stream" && streamId!="Export Stream"){
-			GISAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
+			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
 			if(inOrOut == "in"){
 				importStreamDefinitionAsString =  result.streamDefinition;	
 				importStreamName = $("#importStreamName").val();			
@@ -222,7 +228,7 @@ geoClient = new function() {
 		this.updateCEPConfigurations();
 		this.serialize();
 		if(polygon && polygon.features[0] && polygon.features[0].geometry){
-			GISAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getAllEventStreamInfoDto&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword,function(response) {
+			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getAllEventStreamInfoDto&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword,function(response) {
 				var definitions = response.definitions;
 				var importStreamListHtml = ""; 
 				var exportStreamListHtml = "" ;
@@ -243,7 +249,7 @@ geoClient = new function() {
 
 	this.getStreamDefinitionAsString = function(streamId){
 		this.updateCEPConfigurations();
-		GISAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
+		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
 			return result.inputStreamDefinition;
 		});
 	}
@@ -252,7 +258,7 @@ geoClient = new function() {
 		this.updateCEPConfigurations();
 		var name = $("#planname").val();
 		var queryExpressoin = $("#queryExpressoin").val();
-		GISAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=deployexecutionplan&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&importstreamname="+importStreamName+"&importstreamid="+importStreamId+"&exportstreamname="+exportStreamName+"&exportstreamid="+exportStreamId+"&queryexpression="+queryExpressoin+"&name="+name+"&distributesprocessing="+false+"&timeoutinterval="+0+"&staticsenabled="+false+"&tracingenabled="+false, function(result) {
+		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=deployexecutionplan&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&importstreamname="+importStreamName+"&importstreamid="+importStreamId+"&exportstreamname="+exportStreamName+"&exportstreamid="+exportStreamId+"&queryexpression="+queryExpressoin+"&name="+name+"&distributesprocessing="+false+"&timeoutinterval="+0+"&staticsenabled="+false+"&tracingenabled="+false, function(result) {
 			$("#processmodal").modal('hide');
 			$("#alertText").text(result.message);
 			$("#alertTitle").text(result.status);
@@ -265,7 +271,7 @@ geoClient = new function() {
 		var queryExpressoin = $("#queryExpressoin").val();
 		if(importStreamDefinitionAsString!=""){
 			var inputStreamDefinition = "define stream "+importStreamName+" ("+ importStreamDefinitionAsString + ")";
-			GISAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=validatequery&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&queryexpression="+queryExpressoin+"&inputstreamdefinition="+inputStreamDefinition,function(result) {
+			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=validatequery&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&queryexpression="+queryExpressoin+"&inputstreamdefinition="+inputStreamDefinition,function(result) {
 				if(result.status=="success"){
 					alert("Query is Valid");
 				}else{
@@ -278,7 +284,7 @@ geoClient = new function() {
 
 	this.fetchAvailableExecutionList = function() {
 		this.updateCEPConfigurations();
-		GISAppUtil.makeXMLRequest("POST","/geo-portal/geo/", "action=getAllActiveExecutionPlanConfigurations&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword ,function(xml) {			
+		GeoAppUtil.makeXMLRequest("POST","/geo-portal/geo/", "action=getAllActiveExecutionPlanConfigurations&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword ,function(xml) {			
 			var executionNameListHtml='';
 			$(xml).find("return").each(function()
 			  {
@@ -294,7 +300,7 @@ geoClient = new function() {
 	
 	this.getActiveExecutionPlanConfigurationContent = function(cepExePlanName) {
 		this.updateCEPConfigurations();
-		GISAppUtil.makeXMLRequest("POST","/geo-portal/geo/", "action=getActiveExecutionPlanConfigurationContent&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&exeplanname="+cepExePlanName,function(xml) {
+		GeoAppUtil.makeXMLRequest("POST","/geo-portal/geo/", "action=getActiveExecutionPlanConfigurationContent&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&exeplanname="+cepExePlanName,function(xml) {
 			$(xml).find("return").each(function()
 			  {
 				activeExecutionPlanConfigurationContent = $(this).text();				

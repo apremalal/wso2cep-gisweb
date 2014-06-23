@@ -7,10 +7,9 @@ webSocket.onbinary = function (stream) {
 };
 
 webSocket.onopen = function (outstre) {
-	log.debug(this.toString());
 	var streamList=[];
 	var list = application.get('list');
-	if(list ==null){
+	if(list == null){
 		log.debug('adding list');
 		streamList.push(this);
 		application.put('list', streamList);
