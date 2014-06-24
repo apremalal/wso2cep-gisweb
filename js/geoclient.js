@@ -112,6 +112,14 @@ geoClient = new function() {
                 OpenLayers.Handler.Polygon)               
         };
 
+ 		polygonLayer.events.on({
+		    featuresadded: onFeaturesAdded
+		});
+
+		function onFeaturesAdded(event){		  
+		    alert("yay");
+		}
+
         select = new OpenLayers.Control.SelectFeature(polygonLayer, options);
         map.addControl(select);
         select.activate();
@@ -159,6 +167,8 @@ geoClient = new function() {
                 OpenLayers.Handler.Polygon)               
         };
 
+       
+		        
        select = new OpenLayers.Control.SelectFeature(polygonLayer, options);
        map.addControl(select);
 
@@ -203,16 +213,27 @@ geoClient = new function() {
 		}			
 	}
 
-	this.importStream = function(streamId,inOrOut){
+	this.getAllActiveExecutionPlanConfigurations = function() {
+		this.updateCEPConfigurations();
+		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getAllActiveExecutionPlanConfigurations&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword ,function(result) {
+			var executionNameListHtml = "";
+			for(i = 0;i<result.queries.length;i++){
+				executionNameListHtml += '<a href="#" class="list-group-item" onClick="return false;">'+ result.queries[i] +'</a>';
+			}
+			$("#executoinList").html(executionNameListHtml);
+		});
+	}
+
+	this.importStream = function(streamId,importOrExport){
 		this.updateCEPConfigurations();
 		streamId = streamId.trim();
 		if(streamId!="Import Stream" && streamId!="Export Stream"){
 			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
-			if(inOrOut == "in"){
+			if(importOrExport == "import"){
 				importStreamDefinitionAsString =  result.streamDefinition;	
 				importStreamName = $("#importStreamName").val();			
 				$("#importStreamAlert").text("define stream "+importStreamName+" ("+ importStreamDefinitionAsString + ")");
-			}else if(inOrOut == "out"){
+			}else if(importOrExport == "export"){
 				exportStreamDefinitionAsString =  result.streamDefinition;	
 				exportStreamName = $("#exportStreamName").val();
 				$("#exportStreamAlert").text("define stream "+exportStreamName+" ("+ exportStreamDefinitionAsString + ")");
@@ -235,8 +256,8 @@ geoClient = new function() {
 				for(i in definitions){
 					var defObj = JSON.parse(definitions[i]);
 					var streamId = defObj.name+':'+defObj.version
-					importStreamListHtml += '<li><a href="#" onClick="geoClient.updateStreamId(\''+streamId+'\',\'import\');return false;">'+streamId+'</a></li>';
-					exportStreamListHtml += '<li><a href="#" onClick="geoClient.updateStreamId(\''+streamId+'\',\'export\');return false;">'+streamId+'</a></li>';
+					importStreamListHtml += '<li><a href="#" onClick="geoClient.importStream(\''+streamId+'\',\'import\');return false;">'+streamId+'</a></li>';
+					exportStreamListHtml += '<li><a href="#" onClick="geoClient.importStream(\''+streamId+'\',\'export\');return false;">'+streamId+'</a></li>';
 				}
 				$("#importStreamList").html(importStreamListHtml);
 				$("#exportStreamList").html(exportStreamListHtml);
@@ -245,13 +266,18 @@ geoClient = new function() {
         }else{
         	this.alert("please draw a polygon before creating GEO cep query");
         }
+        $("#processmodal").modal();
 	}
 
-	this.getStreamDefinitionAsString = function(streamId){
+	this.getStreamDefinitionAsString = function(streamId) {
 		this.updateCEPConfigurations();
 		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
 			return result.inputStreamDefinition;
 		});
+	}
+
+	this.generateExecutionPlan = function() {
+		var name = $("#planname").val();
 	}
 
 	this.deployExecutoinPlan = function() {
