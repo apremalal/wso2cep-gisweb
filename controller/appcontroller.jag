@@ -1,6 +1,6 @@
 <%
+include("initcontroller.jag");
 response.contentType = 'text/javascript';
-
 var verb = request.getMethod();
 var log = new Log();
 var cepsocket = '';
@@ -39,6 +39,37 @@ if(verb == "POST") {
 			log.error(e.toString());
 		}
 		print(queryListJson);
+	}else if(action == "getActiveExecutionPlanConfigurations"){
+		extractCEPInfoFromRequest();
+
+		var name = request.getParameter('name');
+		var ws = require('ws');
+
+		var version = new ws.WSRequest();
+		var options = new Array();
+		options.useSOAP = 1.2;
+		options.useWSA = 1.0;
+		options.action = "urn:getActiveExecutionPlanConfiguration";
+		var payload = "<adm:getActiveExecutionPlanConfiguration xmlns:adm=\"http://admin.processor.event.carbon.wso2.org\"><adm:name>"+name+"</adm:name></adm:getActiveExecutionPlanConfiguration>";
+		var result;
+		var exePlanJson = {} ; 
+		try {
+			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap11Endpoint/", false, cepusername, ceppassword);
+			version.send(payload);
+			result = version.responseE4X;
+
+			var returnTemp = result.*::["return"];
+			
+			exePlanJson.status = "success";
+			var tempNameXML = returnTemp..*::name;
+			exePlanJson.name = tempNameXML.text();
+			exePlanJson.query = returnTemp..*::queryExpressions;
+
+		} catch (e) {
+			log.error(e.toString());
+			exePlanJson.status = "failed";
+		}
+		print(exePlanJson);
 	}else if(action == "getAllEventStreamInfoDto") {
 		extractCEPInfoFromRequest();
 
@@ -110,13 +141,24 @@ if(verb == "POST") {
 			result = version.responseE4X;
 			var returnTemp = result.*::["return"];
 			var payLoadAttributes = returnTemp..*::payloadData;
+			var correlationAttributes = returnTemp..*::correlationData;
+
 			var attributeList = {"attributes" : [] } ; 
 
+			/*Extracting payloadData attributes*/
 			for each(var x in payLoadAttributes)
 			{
 				var attribute = x..*::attributeName;
 				attributeList.attributes.push(attribute.text());
 			}
+
+			/*Extracting correlationData attributes*/
+			for each(var x in correlationAttributes)
+			{
+				var attribute = x..*::attributeName;
+				attributeList.attributes.push(attribute.text());
+			}
+
 			print(attributeList);
 		} catch (e) {
 			log.error(e.toString());
@@ -172,6 +214,7 @@ if(verb == "POST") {
 		var statisticsEnabled = request.getParameter('staticsenabled');
 		var tracingEnabled = request.getParameter('tracingenabled');
 		var distributedProcessing = request.getParameter('distributedprocessing');
+		var polygon = request.getParameter('polygon');
 		var ws = require('ws');
 		var version = new ws.WSRequest();
 
@@ -203,17 +246,62 @@ if(verb == "POST") {
 		+"</adm:configurationDto></adm:deployExecutionPlanConfiguration>";
 
 		var result;
-		var responseJson = { "status" :"" , "message" : ""}
+		var responseJson = { "status" :"" , "message" : ""};
 		try {
 			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap12Endpoint/", false, cepusername, ceppassword);
 			version.send(payload);
 			result = version.responseE4X;
 			responseJson.status = "success";
 			responseJson.message = "Query deployed successfully";
+			try{
+				db.query("INSERT INTO polyquery VALUES('"+name+"','"+polygon+"')");
+			}catch(e){
+				responseJson.message = "something went wrong while saving the polygon";
+				log.error(e.toString());
+			}			
 		} catch (e) {
 			responseJson.status = "failed";
 			responseJson.message = "Error occured while deploying the execution plan";
 			log.error(e.toString());
+		}
+		print(responseJson);
+	}else if(action == "undeployexecutionplan") {	
+		extractCEPInfoFromRequest();
+		var name = request.getParameter('name');
+		
+		var ws = require('ws');
+		var version = new ws.WSRequest();
+
+		var options = new Array();
+		options.useSOAP = 1.2;
+		options.useWSA = 1.0;
+		options.action = "urn:undeployActiveExecutionPlanConfiguration";
+		var payload = "<adm:undeployActiveExecutionPlanConfiguration xmlns:adm=\"http://admin.processor.event.carbon.wso2.org\"><adm:name>"+name+"</adm:name></adm:undeployActiveExecutionPlanConfiguration> ";
+		var result;
+		var responseJson = { "status" :"" , "message" : ""};
+		try {
+			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap12Endpoint/", false, cepusername, ceppassword);
+			version.send(payload);
+			result = version.responseE4X;
+			responseJson.status = "success";
+			responseJson.message = "Query undeployed successfully";		
+			db.query("DELETE FROM polyquery WHERE NAME='"+name+"'");	
+		} catch (e) {
+			log.error(e.toString());
+			responseJson.status = "failed";
+			responseJson.message = "Error occured while undeploying the execution plan";
+		}
+		print(responseJson);
+	}else if(action == "getExecutionPlanPolygon"){
+		extractCEPInfoFromRequest();
+		var name = request.getParameter('name');
+		var responseJson = { "status" :"" , "message" : ""};
+		try{
+			var dbResult = db.query("SELECT * FROM polyquery WHERE NAME='"+name+"'");
+			responseJson.status = "success";
+			responseJson.data = dbResult;
+		}catch(e){
+			responseJson.status = "failed";
 		}
 		print(responseJson);
 	}

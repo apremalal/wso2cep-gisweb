@@ -26,25 +26,31 @@
                   <img src="assets/img/wso2-logo.png" width="200" height="100">
                 </div>
               </li>
+
               <li class="active"><a href="/geo-portal"><i class="fa fa-dashboard"></i> Home</a></li>
             
               <li class="dropdown">
                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-pencil"></i> Function <b class="caret"></b></a>
-                 <ul class="dropdown-menu">
-                    <li>
-                      <a tabindex="-1"><span class="mm-text">Within</span></a>
+                 <ul class="dropdown-menu" style="margin-left:15px;padding:10px;">
+                    <li class="function">
+                      <input type="radio" name="type" value="polygon" id="polygonToggle" onclick="geoClient.toggleControl(this);"/>
+                      <label for="polygonToggle">Draw Polygon</label>
                     </li>
-                    <li>
-                      <a tabindex="-1"><span class="mm-text">Outside</span></a>
+                    <li class="function">
+                      <input type="radio" name="type"/>
+                      <label>Outside</label>
                     </li>
-                    <li>
-                      <a tabindex="-1" ><span class="mm-text">Approaching</span></a>
+                    <li class="function">
+                      <input type="radio" name="type" />
+                      <label>Approaching</label>
                     </li>
-                    <li>
-                      <a tabindex="-1" ><span class="mm-text">Leaving</span></a>
+                    <li class="function">
+                      <input type="radio" name="type"/>
+                      <label>Leaving</label>
                     </li>
-                    <li>
-                      <a tabindex="-1"><span class="mm-text">Overlay</span></a>
+                    <li class="function">
+                      <input type="radio" name="type"/>
+                      <label>Overlay</label>
                     </li>
                   </ul>
               </li>
@@ -53,16 +59,12 @@
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-caret-square-o-down"></i> Tools <b class="caret"></b></a>
               <ul class="dropdown-menu" style="margin-left:15px;padding: 10px;">
-                <li>
-                  <input type="radio" name="type" value="polygon" id="polygonToggle" onclick="geoClient.toggleControl(this);"/>
-                  <label for="polygonToggle">Draw Polygon</label>
-                </li>
-                <li>
-                  <input type="radio" name="type" value="none" id="noneToggle" checked="unchecked" onclick="geoClient.toggleControl(this);"/>
+                <li class="function"> 
+                  <input type="radio" name="type" value="none" id="noneToggle" checked=false onclick="geoClient.toggleControl(this);"/>
                   <label for="noneToggle">Navigate</label>
                 </li>      
-                <li>
-                  <input type="radio" name="allow-pan" value="allow-pan" id="allowPanCheckbox" checked=true onclick="allowPan(this);" />
+                <li class="function">
+                  <input type="radio" name="allow-pan" value="allow-pan" id="allowPanCheckbox" checked=false onclick="allowPan(this);" />
                   <label for="allowPanCheckbox">Allow Pan While Drawing</label>
                 </li> 
               </ul>
@@ -76,7 +78,7 @@
           <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
       		<div class="page-header" style="margin-top:0;">		
       			<div class="row">			
-      	 			<h1 class="col-xs-8 col-sm-4 text-center text-left-sm"><i class="fa fa-dashboard page-header-icon"></i>&nbsp;&nbsp;<strong>GEO FENCING</strong></h1>          
+      	 			<h1 class="col-xs-8 col-sm-4 text-center text-left-sm"><i class="fa fa-dashboard page-header-icon"></i>&nbsp;&nbsp;<strong>GEO Extensions</strong></h1>          
             </div>
       		</div>
 
@@ -117,16 +119,20 @@
                           <input type="password" class="form-control" id="ceppassword" placeholder="Password">
                         </div>
                       </div>
+                      <div class="form-group">
+                        <div class="col-md-offset-2 col-sm-5">
+                          <button type="button" class="btn btn-primary btn-sm" style="width:100%" onClick="geoClient.getAllActiveExecutionPlanConfigurations();">Submit</button>
+                        </div>
+                      </div>
                    </form>
                   </div>                      
               </div>
 
                <div class="row panel panel-info">
                   <div class="panel-heading">
-                    <h3 class="panel-title"><i class="fa fa-long-arrow-right"></i> CEP Queries</h3>
+                    <h3 class="panel-title"><i class="fa fa-long-arrow-right"></i> CEP Execution plans</h3>
                   </div>
                   <div class="panel-body">                    
-                      <label class="col-sm-3">Polygon</label>   
                       <div class="form-group" >
                         <div class="col-sm-9 col-md-offset-1" style="margin-top:10px;">
                            <div class="list-group" id="executoinList">
@@ -152,7 +158,7 @@
                       <div class="form-group" >
                         <div class="col-sm-9 col-md-offset-3" style="margin-top:10px;">
                            <button type="button" class="btn btn-primary btn-xs" id="querybulder" onClick="geoClient.launchQueryBuilder();">Query Builder</button>
-                           <button type="button" class="btn btn-default btn-xs" id="connecttows" onClick="geoClient.getAllActiveExecutionPlanConfigurations();" >Listen to CEP</button>
+                           <button type="button" class="btn btn-default btn-xs" id="connecttows" onClick="geoClient.connectToWS();" >Listen to CEP</button>
                            <button type="button" class="btn btn-default btn-xs" id="disconnectfromws" onClick="geoClient.disconnectFromWS();">Disconnect from CEP</button> 
                         </div>
                       </div>
@@ -207,62 +213,21 @@
                       </ul>
                     </div>
                   </div>
-                 </div>
+                 </div> 
 
-                <div class="form-group">
-                  <label for="importstream" class="col-sm-3 control-label">Export Stream</label>
-                  <div class="col-sm-5">
-                    <div class="btn-group">
-                      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="exportstreamlistbtn">
-                            Export Stream
-                        <span class="caret"></span> 
-                      </button>
-                      <ul class="dropdown-menu" id="exportStreamList">
-                       
-                      </ul>
-                    </div>
-                  </div>              
-                </div> 
-
-                <div class="form-group">
-                  <label class="col-sm-3 control-label">Longitude</label>
+                  <div class="form-group">
+                  <label for="importstream" class="col-sm-3 control-label">Query generation</label>
+                  <div class="col-sm-4">
+                   <div class="checkbox">
+                    <label>
+                      <input type="checkbox" id="negationQuery"> Generate negation
+                    </label>
+                  </div>
+                  </div>
                   <div class="col-sm-3">
-                    <div class="btn-group">
-                      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="longitudeselect">
-                            Select
-                        <span class="caret"></span> 
-                      </button>
-                      <ul class="dropdown-menu" id="longparameterlist">
-                       
-                      </ul>
-                    </div>
-                  </div>   
-
-                  <label class="col-sm-3 control-label">Lattitude</label>
-                  <div class="col-sm-3">
-                    <div class="btn-group">
-                      <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="longitudeselect">
-                            Select
-                        <span class="caret"></span> 
-                      </button>
-                      <ul class="dropdown-menu" id="latgparameterlist">
-                       
-                      </ul>
-                    </div>
-                  </div>                 
-                </div> 
-
-                <div class="alert alert-success alert-dismissable col-sm-7 col-md-offset-3" id="importStreamDiv">
-                  <button type="button" class="close" id="deleteImportStream">&times;</button>
-                  <p>Import Stream</p>
-                  <p id="importStreamAlert"></p>
-                </div>
-
-                <div class="alert alert-info alert-dismissable col-sm-7 col-md-offset-3" id="exportStreamDiv">
-                  <button type="button" class="close" id="deleteExportStream">&times;</button>
-                  <p>Export Stream</p>
-                  <p id="exportStreamAlert"></p>
-                </div>
+                   <button type="button" class="btn btn-info" id="generateQuery" onClick="geoClient.generateExecutionPlan();" style="margin-left: 15px;">Generate Query</button>                 
+                  </div>
+                 </div> 
 
                 <div class="form-group"> 
                   <label class="col-sm-3 control-label">Query Expressoin</label>                                            
@@ -278,26 +243,19 @@
                       <button type="button" class="btn btn-default" id="pastetemplate" onClick="geoClient.pasteTemplate();" style="margin-left: 15px;"><i class="fa fa-info-circle"></i></button>
                     </div>
                   </div> 
-                </div>
-
-                <div class="form-group"> 
-                 <div class="col-sm-2 col-md-offset-8">
-                    <p>
-                      <button type="button" class="btn btn-default btn-xs" id="validateQuery" onClick="geoClient.validateQuery();">Validate Query</button>
-                    </p>
-                  </div>
-                </div>               
+                </div>              
               </form>
 
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary" id="addExecutionPlan" onClick="geoClient.deployExecutoinPlan();">Deploy Executoin Plan</button>
+              <button type="button" class="btn btn-primary" id="addExecutionPlan" onClick="geoClient.deployExecutoinPlan();">Deploy</button>
             </div>
           </div>
         </div>
       </div>
 
+      <!--Alert Modal -->
       <div class="modal fade" id="alertmodal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">
@@ -312,6 +270,30 @@
         </div>
       </div>
 
+      <!--Query Info Modal -->
+      <div class="modal fade" id="queryInfoModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+              <h4 class="modal-title"><i class="fa fa-info-circle fa-3"></i> Query Info</h4>
+            </div>
+            <div class="modal-body">
+              <div class="form-group" style="margin-bottom: 50px;">
+                <label  class="col-sm-3 control-label">Execution Plan Name</label>
+                <div class="col-sm-7">
+                  <input type="email" class="form-control" id="planNameInfo" placeholder="Name">
+                </div>
+              </div>
+             <div class="form-group">
+              <div class="alert alert-info" id="queryContent"></div>
+             </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!--USer guide Modal -->
       <div class="modal fade" id="userguide" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog">
           <div class="modal-content">

@@ -1,0 +1,23 @@
+<%
+var db = new Database("jdbc:h2:tmp/geo", "admin", "admin");
+
+db.query("CREATE TABLE IF NOT EXISTS polyquery(NAME VARCHAR(255) PRIMARY KEY, polygon VARCHAR(255))");
+
+var verb = request.getMethod();
+if(verb == "GET") {
+  var action = request.getParameter('action');
+  if(action == "clearTable"){
+  	var responseJson = { "status" :"" , "message" : ""}
+  	try{
+  		db.query("DROP TABLE IF EXISTS polyquery");
+  		responseJson.status = "success";
+  	}catch(e){
+  		var log = new Log();
+  		log.error(e);
+  		responseJson.status = "failed";
+  		responseJson.message = "something went wring while cleaning the h2 database";
+  	}
+  	print(responseJson);	
+  }
+}
+%>

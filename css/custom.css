@@ -216,3 +216,7 @@ table.tablesorter thead tr th:hover {
   display: inline-block;
   border-radius: 50%;
 }
+
+.function{
+  padding:6px;
+}
