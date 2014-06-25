@@ -1,7 +1,7 @@
 <%
 var db = new Database("jdbc:h2:tmp/geo", "admin", "admin");
 
-db.query("CREATE TABLE IF NOT EXISTS polyquery(NAME VARCHAR(255) PRIMARY KEY, polygon VARCHAR(255))");
+db.query("CREATE TABLE IF NOT EXISTS polyquery(NAME VARCHAR(255) PRIMARY KEY, polygon VARCHAR(10000))");
 
 var verb = request.getMethod();
 if(verb == "GET") {

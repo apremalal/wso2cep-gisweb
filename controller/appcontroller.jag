@@ -244,7 +244,7 @@ if(verb == "POST") {
         +"<xsd:statisticsEnabled>"+statisticsEnabled+"</xsd:statisticsEnabled>"
         +"<xsd:tracingEnabled>"+tracingEnabled+"</xsd:tracingEnabled>"
 		+"</adm:configurationDto></adm:deployExecutionPlanConfiguration>";
-
+log.info(payload);
 		var result;
 		var responseJson = { "status" :"" , "message" : ""};
 		try {
@@ -301,6 +301,7 @@ if(verb == "POST") {
 			responseJson.status = "success";
 			responseJson.data = dbResult;
 		}catch(e){
+			log.error(e.toString());
 			responseJson.status = "failed";
 		}
 		print(responseJson);

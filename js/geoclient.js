@@ -1,4 +1,4 @@
-var map, drawControls, select, polygonLayer, markerLayer, geojson, queryPolygonFeature;
+var map, drawControls, select, polygonLayer, markerLayer, geojson, queryPolygonFeature, isConnectedToWS;
 
     $(document).ready(function(){  
 
@@ -120,6 +120,11 @@ geoClient = new function() {
 
 		function onFeaturesAdded(event){	
 			if(!event.features[0].style){
+				for(key in drawControls) {
+				     var control = drawControls[key];
+				     control.deactivate();
+				 }
+				$("#polygonToggle").prop('checked', false);
 				geoClient.launchQueryBuilder();
 			}
 		}
@@ -165,6 +170,11 @@ geoClient = new function() {
 
 		function onFeaturesAdded(event){	
 			if(!event.features[0].style){
+				for(key in drawControls) {
+				     var control = drawControls[key];
+				     control.deactivate();
+				 }
+				 $("#polygonToggle").prop('checked', false);
 				geoClient.launchQueryBuilder();
 			}		    
 		}
@@ -304,6 +314,8 @@ geoClient = new function() {
 	this.launchQueryBuilder = function(){
 		this.updateCEPConfigurations();
 		this.serialize();
+		$("#planname").val('');
+		$("#queryExpressoin").val('');
 		if(polygon && polygon.features[0] && polygon.features[0].geometry){
 			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/","action=getAllEventStreamInfoDto&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword,function(response) {
 				var definitions = response.definitions;
@@ -345,19 +357,26 @@ geoClient = new function() {
 	}
 
 	this.generateExecutionPlan = function() {
-		var name = $("#planname").val();
-		var strPolygon = JSON.stringify(polygon.features[0].geometry);
-    	strPolygon = strPolygon.replace(/"/g, "'");
+		var temp = $("#planname").val();
+		temp = temp.replace(/ /g, "");
+		var name = temp +'_geo_within';
+		var featureLength = polygon.features.length;
+		if(featureLength>0){
+			var strPolygon = JSON.stringify(polygon.features[featureLength-1].geometry);
+	    	strPolygon = strPolygon.replace(/"/g, "'");
 
-    	if(importStreamName){
-    		var query = 'from '+importStreamName+'[geo:iswithin(longitude,lattitude,"'+strPolygon+'")==true] select lattitude,longitude, true as iswithin insert into iswithinstream; ';
-		
-			if ($("#negationQuery").is(":checked"))			{
-			  query += 'from '+importStreamName+'[geo:iswithin(longitude,lattitude,"'+strPolygon+'")==false] select lattitude,longitude, false as iswithin insert into iswithinstream;';
-			}
-			$("#queryExpressoin").val(query);
-    	}else
-    		this.alert("please choose an import stream");
+	    	if(importStreamName){
+	    		var query = 'from '+importStreamName+'[geo:iswithin(longitude,lattitude,"'+strPolygon+'")==true] select correlation_timeStamp,deviceId,lattitude,longitude, true as iswithin, \''+name+'\' as name insert into isWithinOutputStream; ';
+			
+				if ($("#negationQuery").is(":checked"))			{
+				  query += 'from '+importStreamName+'[geo:iswithin(longitude,lattitude,"'+strPolygon+'")==false] select correlation_timeStamp,deviceId,lattitude,longitude, false as iswithin, \''+name+'\' as name insert into isWithinOutputStream;';
+				}
+				$("#queryExpressoin").val(query);
+	    	}else
+	    		this.alert("please choose an import stream");
+	    	}else{
+	    		this.alert("please draw a polygon");
+	    	}		
 		
 	}
 
@@ -371,17 +390,22 @@ geoClient = new function() {
 		exportStreamName = "isWithinOutputStream";
 		exportStreamId = "isWithinOutputStream:1.0.0";
 
-		var strPolygon = JSON.stringify(polygon.features[0].geometry);
-
-		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=deployexecutionplan&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&importstreamname="+importStreamName+"&importstreamid="+importStreamId+"&exportstreamname="+exportStreamName+"&exportstreamid="+exportStreamId+"&queryexpression="+queryExpressoin+"&name="+name+"&distributesprocessing="+false+"&timeoutinterval="+0+"&staticsenabled="+false+"&tracingenabled="+false+"&polygon="+strPolygon, function(result) {
-			$("#processmodal").modal('hide');
-			$("#alertText").text(result.message);
-			$("#alertTitle").text(result.status);
-			$("#alertmodal").modal();
-			if(result.status == "success"){
-				geoClient.getAllActiveExecutionPlanConfigurations();
-			}
-		});
+		var featureLength = polygon.features.length;
+		if(featureLength>0){
+			var strPolygon = JSON.stringify(polygon.features[featureLength-1].geometry);
+			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=deployexecutionplan&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&importstreamname="+importStreamName+"&importstreamid="+importStreamId+"&exportstreamname="+exportStreamName+"&exportstreamid="+exportStreamId+"&queryexpression="+queryExpressoin+"&name="+name+"&distributesprocessing="+false+"&timeoutinterval="+0+"&staticsenabled="+false+"&tracingenabled="+false+"&polygon="+strPolygon, function(result) {
+				$("#processmodal").modal('hide');
+				$("#alertText").text(result.message);
+				$("#alertTitle").text(result.status);
+				$("#alertmodal").modal();
+				if(result.status == "success"){
+					geoClient.getAllActiveExecutionPlanConfigurations();
+					if(!isConnectedToWS){
+						geoClient.connectToWS();
+					}				
+				}
+			});
+		}
 	}
 
 	this.undeployExecutionPlan = function(name){
@@ -441,6 +465,9 @@ geoClient = new function() {
 		     var control = drawControls[key];
 		     if(element.value == key && element.checked) {
 		         control.activate();
+		         $("#alertTitle").text("Step 1");
+		         $("#alertText").text("Draw a polygon to generate CEP queries.");
+				 $("#alertmodal").modal();
 		     } else {
 		         control.deactivate();
 		     }
@@ -484,6 +511,7 @@ geoClient = new function() {
 			$("#socketindicator").attr("src","assets/icons/green_indicator.png");
 			consoleText += ">> Websocket opened.\n"
 			$("#console").val(consoleText);
+			isConnectedToWS = true; 
 		};
 
 		ws.onmessage = function(event){
@@ -499,7 +527,7 @@ geoClient = new function() {
 			        new OpenLayers.Feature.Vector(withinLocation, {tooltip: 'OpenLayers'})
 			    ]); 
 
-			    var popupLable = "lon :"+ longitude +"<br>lat :" + lattitude + "<br> iswithin : "+ geoPoint.properties.iswithin;
+			    var popupLable = "lon :"+ longitude +"<br>lat :" + lattitude + "<br> iswithin : "+ geoPoint.properties.iswithin+ "<br> query name : "+ geoPoint.properties.name;
 		        var popup = new OpenLayers.Popup.FramedCloud("Popup", withinLocation.getBounds().getCenterLonLat(), null,popupLable ,null,true);
 
 		        /*removing the exisiting popups*/
@@ -514,6 +542,7 @@ geoClient = new function() {
 			$("#socketindicator").attr("src","assets/icons/red_indicator.png");
 			consoleText += ">> Websocket closed.\n"
 			$("#console").val(consoleText);
+			isConnectedToWS = false;
 		};
 		ws.onopen();
 	}
@@ -524,6 +553,7 @@ geoClient = new function() {
 	}
 
 	this.alert = function(message){
+		$("#alertTitle").text("Oops!");
 		$("#alertText").text(message);
 		$("#alertmodal").modal();
 	}
