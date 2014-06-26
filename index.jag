@@ -166,11 +166,17 @@
 
               <!--Console -->
               <div class="row panel panel-info">
-                  <div class="panel-body ">
-                    <p>
+                  <div class="panel-heading">
                     <span class="avatar">
                       <button class="btn btn-default" type="button" onClick="geoClient.clearConsole();"><i class="fa fa-refresh"></i></button>
-                    </span>Console <label class="col-sm-5" style="float:right;">Websocket status :<span class="avatar"> <img id="socketindicator" src="assets/icons/red_indicator.png" style="width: 20px;float:right;"></span></label></p>               
+                    </span>Console 
+                    <button class="btn btn-default" type="button" onClick="geoClient.toggelLink();"  style="float:right;"><i class="fa  fa-link" id="linkToggel"></i></button>
+                    <label class="col-sm-5" style="float:right;margin-top:8px;">Websocket status :<span class="avatar"> 
+                      <img id="socketindicator" src="assets/icons/red_indicator.png" style="width: 20px;float:right;">                      
+                      </span>
+                    </label>
+                  </div>
+                  <div class="panel-body ">
                     <textarea class="form-control" rows="3" id="console" rows="5" cols="60"></textarea>  
                   </div>                      
               </div>

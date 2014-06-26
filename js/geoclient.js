@@ -472,7 +472,15 @@ geoClient = new function() {
 		         control.deactivate();
 		     }
 		 }
-	  }
+	 }
+
+	 this.toggelLink = function(){
+	 	if(isConnectedToWS){
+	 		this.disconnectFromWS();
+	 	}else{
+	 		this.connectToWS();
+	 	}
+	 }
 		
 	this.serialize = function() {
 		    var str = geojson.write(polygonLayer.features, true);
@@ -509,9 +517,10 @@ geoClient = new function() {
 		ws = new WebSocket(url);
 		ws.onopen = function() {
 			$("#socketindicator").attr("src","assets/icons/green_indicator.png");
+			$("#linkToggel").attr('class', 'fa  fa-unlink');
 			consoleText += ">> Websocket opened.\n"
 			$("#console").val(consoleText);
-			isConnectedToWS = true; 
+			isConnectedToWS = true;			
 		};
 
 		ws.onmessage = function(event){
@@ -540,6 +549,7 @@ geoClient = new function() {
 
 		ws.onclose = function(){
 			$("#socketindicator").attr("src","assets/icons/red_indicator.png");
+			$("#linkToggel").attr('class', 'fa  fa-link');
 			consoleText += ">> Websocket closed.\n"
 			$("#console").val(consoleText);
 			isConnectedToWS = false;
