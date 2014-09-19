@@ -49,9 +49,6 @@ geoClient = new function() {
 	var executionPlanList = new Object();
 	var activeExecutionPlanName = '';
 	var activeExecutionPlanConfigurationContent = '';
-	var cepsocket;
-	var cepusername;
-	var ceppassword;
 
 	/*Query builder params*/
 	var importStreamId = '';
@@ -63,7 +60,7 @@ geoClient = new function() {
 
 	this.init = function(){
 
-		//geoClient.getAllActiveExecutionPlanConfigurations();
+		this.getAllActiveExecutionPlanConfigurations();
 
 		$("#map").html('');
 		$("#noneToggle").prop('checked', true);;
@@ -219,14 +216,8 @@ geoClient = new function() {
 													        })
 					   	});
 	    map.addLayer(markerLayer);
-	}
 
-	this.updateCEPConfigurations = function(){
-		cepsocket = $("#cepsocket").val();
-		cepusername = $("#cepusername").val();
-		ceppassword =  $("#ceppassword").val();
-		if(!cepsocket || !cepusername || !ceppassword)
-			this.alert("Please enter cep configurations to perform the operation");
+        this.getAllActiveExecutionPlanConfigurations();
 	}
 
 	this.updateStreamId = function(streamId,inOrOut){
@@ -238,7 +229,7 @@ geoClient = new function() {
 	}
 
 	this.highlightQueryPolygon = function(name) {
-		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getExecutionPlanPolygon&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&name="+name,function(result) {
+		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getExecutionPlanPolygon&"+"name="+name,function(result) {
 			var sitePoints = [];
 			var siteStyle = {
 				fillRule:"evenodd",
@@ -278,8 +269,7 @@ geoClient = new function() {
 	}
 
 	this.getAllActiveExecutionPlanConfigurations = function() {
-		this.updateCEPConfigurations();
-		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getAllActiveExecutionPlanConfigurations&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword ,function(result) {
+		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getAllActiveExecutionPlanConfigurations" ,function(result) {
 			var executionNameListHtml = "";
 			for(i = 0;i<result.queryNames.length;i++){
 				var name = result.queryNames[i];
@@ -290,10 +280,9 @@ geoClient = new function() {
 	}
 
 	this.importStream = function(streamId,importOrExport){
-		this.updateCEPConfigurations();
 		streamId = streamId.trim();
 		if(streamId!="Import Stream" && streamId!="Export Stream"){
-			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(result) {
+			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getStreamDefinitionAsString"+"&streamid="+streamId,function(result) {
 			if(importOrExport == "import"){
 				importStreamDefinitionAsString =  result.streamDefinition;	
 				importStreamName = streamId.split(":");
@@ -312,12 +301,11 @@ geoClient = new function() {
 	}
 
 	this.launchQueryBuilder = function(){
-		this.updateCEPConfigurations();
 		this.serialize();
 		$("#planname").val('');
 		$("#queryExpressoin").val('');
 		if(polygon && polygon.features[0] && polygon.features[0].geometry){
-			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/","action=getAllEventStreamInfoDto&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword,function(response) {
+			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/","action=getAllEventStreamInfoDto",function(response) {
 				var definitions = response.definitions;
 				var importStreamListHtml = ""; 
 				var exportStreamListHtml = "" ;
@@ -335,9 +323,8 @@ geoClient = new function() {
 	}
 
 	this.showQueryInfo = function(name){
-		this.updateCEPConfigurations();
 		this.serialize();
-		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getActiveExecutionPlanConfigurations&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&name="+name,function(response) {
+		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getActiveExecutionPlanConfigurations"+"&name="+name,function(response) {
 			if(response.status = "success"){
 				var queryHTML = '<strong>Query:</strong><br/>' + response.query
 				$("#queryContent").html(queryHTML);
@@ -350,8 +337,7 @@ geoClient = new function() {
 
 
 	this.getStreamDefinitionAsString = function(streamId) {
-		this.updateCEPConfigurations();
-		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getStreamDefinitionAsString&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&streamid="+streamId,function(response) {
+		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=getStreamDefinitionAsString"+"&streamid="+streamId,function(response) {
 			return response.inputStreamDefinition;
 		});
 	}
@@ -381,7 +367,6 @@ geoClient = new function() {
 	}
 
 	this.deployExecutoinPlan = function() {
-		this.updateCEPConfigurations();
 		var temp = $("#planname").val();
 		temp = temp.replace(/ /g, "");
 		var name = temp +'_geo_within';
@@ -393,7 +378,7 @@ geoClient = new function() {
 		var featureLength = polygon.features.length;
 		if(featureLength>0){
 			var strPolygon = JSON.stringify(polygon.features[featureLength-1].geometry);
-			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=deployexecutionplan&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&importstreamname="+importStreamName+"&importstreamid="+importStreamId+"&exportstreamname="+exportStreamName+"&exportstreamid="+exportStreamId+"&queryexpression="+queryExpressoin+"&name="+name+"&distributesprocessing="+false+"&timeoutinterval="+0+"&staticsenabled="+false+"&tracingenabled="+false+"&polygon="+strPolygon, function(result) {
+			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=deployexecutionplan"+"&importstreamname="+importStreamName+"&importstreamid="+importStreamId+"&exportstreamname="+exportStreamName+"&exportstreamid="+exportStreamId+"&queryexpression="+queryExpressoin+"&name="+name+"&distributesprocessing="+false+"&timeoutinterval="+0+"&staticsenabled="+false+"&tracingenabled="+false+"&polygon="+strPolygon, function(result) {
 				$("#processmodal").modal('hide');
 				$("#alertText").text(result.message);
 				$("#alertTitle").text(result.status);
@@ -409,8 +394,7 @@ geoClient = new function() {
 	}
 
 	this.undeployExecutionPlan = function(name){
-		this.updateCEPConfigurations();
-		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=undeployexecutionplan&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&name="+name, function(result) {
+		GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=undeployexecutionplan"+"&name="+name, function(result) {
 			geoClient.getAllActiveExecutionPlanConfigurations();
 			if(queryPolygonFeature){
 				polygonLayer.removeFeatures([queryPolygonFeature]);
@@ -419,11 +403,10 @@ geoClient = new function() {
 	}
 
 	this.validateQuery = function() {
-		this.updateCEPConfigurations();
 		var queryExpressoin = $("#queryExpressoin").val();
 		if(importStreamDefinitionAsString!=""){
 			var inputStreamDefinition = "define stream "+importStreamName+" ("+ importStreamDefinitionAsString + ")";
-			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=validatequery&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&queryexpression="+queryExpressoin+"&inputstreamdefinition="+inputStreamDefinition,function(result) {
+			GeoAppUtil.makeJSONRequest("POST","/geo-portal/geo/", "action=validatequery"+"&queryexpression="+queryExpressoin+"&inputstreamdefinition="+inputStreamDefinition,function(result) {
 				if(result.status=="success"){
 					alert("Query is Valid");
 				}else{
@@ -435,8 +418,7 @@ geoClient = new function() {
 	}
 
 	this.fetchAvailableExecutionList = function() {
-		this.updateCEPConfigurations();
-		GeoAppUtil.makeXMLRequest("POST","/geo-portal/geo/", "action=getAllActiveExecutionPlanConfigurations&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword ,function(xml) {			
+		GeoAppUtil.makeXMLRequest("POST","/geo-portal/geo/", "action=getAllActiveExecutionPlanConfigurations",function(xml) {
 			var executionNameListHtml='';
 			$(xml).find("return").each(function()
 			  {
@@ -451,8 +433,7 @@ geoClient = new function() {
 	}
 	
 	this.getActiveExecutionPlanConfigurationContent = function(cepExePlanName) {
-		this.updateCEPConfigurations();
-		GeoAppUtil.makeXMLRequest("POST","/geo-portal/geo/", "action=getActiveExecutionPlanConfigurationContent&cepsocket="+cepsocket+"&cepusername="+cepusername+"&ceppassword="+ceppassword+"&exeplanname="+cepExePlanName,function(xml) {
+		GeoAppUtil.makeXMLRequest("POST","/geo-portal/geo/", "action=getActiveExecutionPlanConfigurationContent"+"&exeplanname="+cepExePlanName,function(xml) {
 			$(xml).find("return").each(function()
 			  {
 				activeExecutionPlanConfigurationContent = $(this).text();				
@@ -513,7 +494,7 @@ geoClient = new function() {
 	}
      
 	this.connectToWS = function(){
-		var url = 'ws://localhost:9764/geo-portal/geo/websocket';
+		var url = 'ws://localhost:9763/geo-portal/geo/websocket';
 		ws = new WebSocket(url);
 		ws.onopen = function() {
 			$("#socketindicator").attr("src","assets/icons/green_indicator.png");

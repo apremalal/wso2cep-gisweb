@@ -75,7 +75,7 @@
             <li>
           </ul>
           </div>
-          <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          <div class="col-md-9 col-md-offset-2 main">
       		<div class="page-header" style="margin-top:0;">		
       			<div class="row">			
       	 			<h1 class="col-xs-8 col-sm-4 text-center text-left-sm"><i class="fa fa-dashboard page-header-icon"></i>&nbsp;&nbsp;<strong>GEO Extensions</strong></h1>          
@@ -89,45 +89,12 @@
                   <h3 class="panel-title"><button class="btn btn-default" type="button" onclick="geoClient.refreshPolygonLayer();"><i class="fa fa-refresh"></i></button> Geo fencing map 
                   </h3>
                 </div>
-                <div id="map" class="pannel-body" style="height:800px;">
+                <div id="map" class="pannel-body" style="height:700px;">
                 </div>
               </div>
              </div>
 
       		   <div class="col-lg-4">        			
-              <div class="row panel panel-info">
-                  <div class="panel-heading">
-                    <h3 class="panel-title"><i class="fa fa-long-arrow-right"></i>Configuratoins</h3>
-                  </div>
-                  <div class="panel-body">
-                    <form class="form-horizontal" role="form">
-                      <div class="form-group">
-                        <label for="cepsocket" class="col-sm-2 control-label">CEPURL</label>
-                        <div class="col-sm-5">
-                          <input type="email" class="form-control" id="cepsocket" placeholder="CEP URL">
-                        </div>
-                      </div>
-                      <div class="form-group">
-                        <label for="cepusername" class="col-sm-2 control-label">username</label>
-                        <div class="col-sm-5">
-                          <input type="email" class="form-control" id="cepusername" placeholder="User Name">
-                        </div>
-                      </div>
-                      <div class="form-group">
-                        <label for="ceppassowrd" class="col-sm-2 control-label">password</label>
-                        <div class="col-sm-5">
-                          <input type="password" class="form-control" id="ceppassword" placeholder="Password">
-                        </div>
-                      </div>
-                      <div class="form-group">
-                        <div class="col-md-offset-2 col-sm-5">
-                          <button type="button" class="btn btn-primary btn-sm" style="width:100%" onClick="geoClient.getAllActiveExecutionPlanConfigurations();">Submit</button>
-                        </div>
-                      </div>
-                   </form>
-                  </div>                      
-              </div>
-
                <div class="row panel panel-info">
                   <div class="panel-heading">
                     <h3 class="panel-title"><i class="fa fa-long-arrow-right"></i> CEP Execution plans</h3>

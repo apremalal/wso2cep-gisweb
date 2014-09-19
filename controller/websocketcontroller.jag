@@ -2,11 +2,7 @@
 
 var log = new Log();
 
-webSocket.onbinary = function (stream) {
-	log.debug('Client Streamed : ' + stream.toString());
-};
-
-webSocket.onopen = function (outstre) {
+webSocket.onopen = function () {
 	var streamList=[];
 	var list = application.get('list');
 	if(list == null){
@@ -23,7 +19,7 @@ webSocket.onopen = function (outstre) {
 	}
 };
 
-webSocket.onclose = function (status) {
+webSocket.onclose = function () {
 
 	log.debug('Client Streamed close');
 	log.debug(this.outbound);
@@ -35,7 +31,6 @@ webSocket.onclose = function (status) {
 			log.debug("removing element");
 		}
 	}
-
 	log.debug(list.length);
 };
 

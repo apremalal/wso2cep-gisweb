@@ -3,14 +3,14 @@ include("initcontroller.jag");
 response.contentType = 'text/javascript';
 var verb = request.getMethod();
 var log = new Log();
-var cepsocket = '';
-var cepusername = '';
-var ceppassword = '';
+
+var cepsocket = 'https://localhost:9443';
+var cepusername = 'admin';
+var ceppassword = 'admin';
 
 if(verb == "POST") {
 	var action = request.getParameter('action');
 	if(action == "getAllActiveExecutionPlanConfigurations"){
-		extractCEPInfoFromRequest();
 		var ws = require('ws');
 
 		var version = new ws.WSRequest();
@@ -40,7 +40,6 @@ if(verb == "POST") {
 		}
 		print(queryListJson);
 	}else if(action == "getActiveExecutionPlanConfigurations"){
-		extractCEPInfoFromRequest();
 
 		var name = request.getParameter('name');
 		var ws = require('ws');
@@ -71,8 +70,6 @@ if(verb == "POST") {
 		}
 		print(exePlanJson);
 	}else if(action == "getAllEventStreamInfoDto") {
-		extractCEPInfoFromRequest();
-
 		var ws = require('ws');
 		var version = new ws.WSRequest();
 
@@ -84,7 +81,7 @@ if(verb == "POST") {
 		var result;
 
 		try {
-			version.open(options, cepsocket+"/services/EventStreamAdminService.EventStreamAdminServiceHttpsSoap12Endpoint/", false, cepusername, ceppassword);
+			version.open(options, cepsocket+"/services/EventStreamAdminService.EventStreamAdminServiceHttpsSoap11Endpoint/", false, cepusername, ceppassword);
 			version.send(payload);
 			result = version.responseE4X;
 			
@@ -100,7 +97,7 @@ if(verb == "POST") {
 			log.error(e.toString());
 		}
 	}else if(action == "getStreamDefinitionAsString") {
-		extractCEPInfoFromRequest();
+		//extractCEPInfoFromRequest();
 		var streamid = request.getParameter('streamid');
 		streamid = streamid.trim();
 		var ws = require('ws');
@@ -123,7 +120,6 @@ if(verb == "POST") {
 			log.error(e.toString());
 		}
 	}else if(action == "getStreamDefinitionDto") {
-		extractCEPInfoFromRequest();
 		var streamid = request.getParameter('streamid');
 		streamid = streamid.trim();
 		var ws = require('ws');
@@ -164,7 +160,6 @@ if(verb == "POST") {
 			log.error(e.toString());
 		}
 	}else if(action == "validatequery") {
-		extractCEPInfoFromRequest();
 		var queryexpression = request.getParameter('queryexpression');
 		var streamDefinition = request.getParameter('inputstreamdefinition')
 
@@ -180,7 +175,7 @@ if(verb == "POST") {
 		var responseJson = { "status" :"" , "message" : ""}
 		try {
 			
-			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap12Endpoint/", false, cepusername, ceppassword);			
+			version.open(options, cepsocket+"/services/EventProcessorAdminService.EventProcessorAdminServiceHttpsSoap12Endpoint/", false, cepusername, ceppassword);
 			version.send(payload);
 			result = version.responseE4X;
 			
@@ -202,8 +197,7 @@ if(verb == "POST") {
 			responseJson.message = e.message;
 			print(responseJson);
 		}
-	}else if(action == "deployexecutionplan") {		
-		extractCEPInfoFromRequest();
+	}else if(action == "deployexecutionplan") {
 		var queryExpressoin = request.getParameter('queryexpression');
 		var importStreamName = request.getParameter('importstreamname');
 		var importStreamId = request.getParameter('importstreamid');
@@ -244,7 +238,7 @@ if(verb == "POST") {
         +"<xsd:statisticsEnabled>"+statisticsEnabled+"</xsd:statisticsEnabled>"
         +"<xsd:tracingEnabled>"+tracingEnabled+"</xsd:tracingEnabled>"
 		+"</adm:configurationDto></adm:deployExecutionPlanConfiguration>";
-log.info(payload);
+
 		var result;
 		var responseJson = { "status" :"" , "message" : ""};
 		try {
@@ -265,8 +259,7 @@ log.info(payload);
 			log.error(e.toString());
 		}
 		print(responseJson);
-	}else if(action == "undeployexecutionplan") {	
-		extractCEPInfoFromRequest();
+	}else if(action == "undeployexecutionplan") {
 		var name = request.getParameter('name');
 		
 		var ws = require('ws');
@@ -293,7 +286,6 @@ log.info(payload);
 		}
 		print(responseJson);
 	}else if(action == "getExecutionPlanPolygon"){
-		extractCEPInfoFromRequest();
 		var name = request.getParameter('name');
 		var responseJson = { "status" :"" , "message" : ""};
 		try{
@@ -306,12 +298,6 @@ log.info(payload);
 		}
 		print(responseJson);
 	}
-}
-
-function extractCEPInfoFromRequest() {
-	cepsocket = request.getParameter('cepsocket');
-	cepusername = request.getParameter('cepusername');
-	ceppassword = request.getParameter('ceppassword');
 }
 
 %>
